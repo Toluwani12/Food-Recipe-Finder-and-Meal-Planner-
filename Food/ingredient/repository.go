@@ -32,7 +32,7 @@ func (r Repository) getByReference(ref string) (*Ingredient, error) {
 }
 
 func (r Repository) save(data Ingredient) (*Ingredient, error) {
-	data.ID = uuid.NewString()
+	//data.ID = uuid.NewString()
 	_, err := r.db.NamedExec(`INSERT INTO ingredients (name, id) VALUES (:name, :id)`, data)
 	if err != nil {
 		return nil, err
