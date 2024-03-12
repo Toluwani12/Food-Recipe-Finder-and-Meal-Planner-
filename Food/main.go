@@ -2,6 +2,7 @@ package main
 
 import (
 	"Food/recipe"
+	"Food/user"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -30,4 +31,13 @@ func main() {
 	// Add routes for CheckoutCreateHandler, Update, Delete
 
 	http.ListenAndServe(":8080", r)
+
+	user.InitDB()
+
+	r.Post("/register", user.RegisterUser)
+
+	log.Println("Server starting on port 8080")
+	if err := http.ListenAndServe(":8080", r); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }
