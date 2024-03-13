@@ -25,7 +25,7 @@ func (rs *Resource) Router() *chi.Mux {
 
 	r.Post("/add", hndlr.add)
 	r.Delete("/delete", hndlr.delete)
-	//r.Put("/update", hndlr.update)
+	r.Put("/update", hndlr.update)
 	//r.Get("/get", hndlr.get)
 
 	return r

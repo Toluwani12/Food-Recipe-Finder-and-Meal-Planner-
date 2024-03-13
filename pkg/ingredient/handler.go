@@ -59,3 +59,30 @@ func (h Handler) delete(w http.ResponseWriter, r *http.Request) {
 		Code:    200,
 	})
 }
+
+func (h Handler) update(w http.ResponseWriter, r *http.Request) {
+	// Extract the ID from the URL
+	id := chi.URLParam(r, "id")
+
+	// Binding or extracting the data from the request
+	var data AddRequest
+	if err := data.Bind(r); err != nil {
+		pkg.Render(w, r, nil)
+		return
+	}
+
+	// Update the data through the update service
+	ingredient, err := h.svc.update(r.Context(), id, data)
+	if err != nil {
+		// Handle error
+		pkg.Render(w, r, nil)
+		return
+	}
+
+	// Returning the response to the user
+	pkg.Render(w, r, pkg.ApiResponse{
+		Data:    ingredient,
+		Message: "ingredient updated successfully",
+		Code:    200,
+	})
+}

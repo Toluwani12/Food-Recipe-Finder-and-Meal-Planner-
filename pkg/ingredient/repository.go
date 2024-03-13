@@ -50,3 +50,15 @@ func (r Repository) delete(ctx context.Context, id string) (*Ingredient, error) 
 
 	return &data, nil
 }
+
+// for this update, it'd need to collect the new data and probably bind it
+func (r Repository) update(id string, data AddRequest) (*Ingredient, error) {
+	// Construct the update query with newData fields and the id
+	_, err := r.db.Exec("UPDATE ingredients SET name = $1, quantity = $2 WHERE id = $3", data.Name, data.Quantity, id)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
