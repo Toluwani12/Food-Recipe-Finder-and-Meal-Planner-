@@ -1,6 +1,9 @@
 package ingredient
 
-import "errors"
+import (
+	"context"
+	"errors"
+)
 
 type Service struct {
 	repo *Repository
@@ -10,7 +13,7 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s Service) add(data Ingredient) (*Ingredient, error) {
+func (s Service) add(ctx context.Context, data AddRequest) (*Ingredient, error) {
 	ingredient, err := s.repo.getByReference(data.Name)
 	if ingredient != nil {
 		return nil, errors.New("ingredient with this reference already exist")
@@ -20,7 +23,7 @@ func (s Service) add(data Ingredient) (*Ingredient, error) {
 		return nil, err
 	}
 
-	resp, err := s.repo.save(data)
+	resp, err := s.repo.save(ctx, data)
 
 	if err != nil {
 		return nil, err
@@ -30,17 +33,8 @@ func (s Service) add(data Ingredient) (*Ingredient, error) {
 
 }
 
-func (s Service) delete(data Ingredient) (*Ingredient, error) {
-	ingredient, err := s.repo.getByReference(data.Name)
-	if ingredient != nil {
-		return nil, errors.New("ingredient with this reference doesn't exist")
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := s.repo.delete(data)
+func (s Service) delete(ctx context.Context, id string) (*Ingredient, error) {
+	resp, err := s.repo.delete(ctx, id)
 
 	if err != nil {
 		return nil, err

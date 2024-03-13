@@ -1,6 +1,7 @@
 package recipe
 
 import (
+	"Food/pkg"
 	"encoding/json"
 	"net/http"
 )
@@ -22,7 +23,7 @@ func (h Handler) add(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := data.bind(r); err != nil {
-		resp := NewApiResponse(nil, "could not validate request", http.StatusBadRequest, err.Error())
+		resp := pkg.NewApiResponse(nil, "could not validate request", http.StatusBadRequest, err.Error())
 		_ = json.NewEncoder(w).Encode(resp)
 		return
 	}
@@ -30,12 +31,12 @@ func (h Handler) add(w http.ResponseWriter, r *http.Request) {
 	recipe, err := h.svc.add(data)
 
 	if err != nil {
-		resp := NewApiResponse(nil, "could not add recipe", http.StatusInternalServerError, err.Error())
+		resp := pkg.NewApiResponse(nil, "could not add recipe", http.StatusInternalServerError, err.Error())
 		_ = json.NewEncoder(w).Encode(resp)
 		return
 	}
 
-	resp := NewApiResponse(recipe, "recipe added successfully", http.StatusCreated, "")
+	resp := pkg.NewApiResponse(recipe, "recipe added successfully", http.StatusCreated, "")
 
 	_ = json.NewEncoder(w).Encode(resp)
 }
@@ -47,7 +48,7 @@ func (h Handler) delete(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := data.bind(r); err != nil {
-		resp := NewApiResponse(nil, "could not validate request", http.StatusBadRequest, err.Error())
+		resp := pkg.NewApiResponse(nil, "could not validate request", http.StatusBadRequest, err.Error())
 		_ = json.NewEncoder(w).Encode(resp)
 		return
 	}
@@ -55,12 +56,12 @@ func (h Handler) delete(w http.ResponseWriter, r *http.Request) {
 	recipe, err := h.svc.delete(data)
 
 	if err != nil {
-		resp := NewApiResponse(nil, "could not add recipe", http.StatusInternalServerError, err.Error())
+		resp := pkg.NewApiResponse(nil, "could not add recipe", http.StatusInternalServerError, err.Error())
 		_ = json.NewEncoder(w).Encode(resp)
 		return
 	}
 
-	resp := NewApiResponse(recipe, "recipe added successfully", http.StatusCreated, "")
+	resp := pkg.NewApiResponse(recipe, "recipe added successfully", http.StatusCreated, "")
 
 	_ = json.NewEncoder(w).Encode(resp)
 }

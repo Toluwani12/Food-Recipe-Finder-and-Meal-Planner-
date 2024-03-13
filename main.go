@@ -1,8 +1,8 @@
 package main
 
 import (
-	"Food/recipe"
-	"Food/user"
+	"Food/pkg/recipe"
+	user2 "Food/pkg/user"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -32,9 +32,9 @@ func main() {
 
 	http.ListenAndServe(":8080", r)
 
-	user.InitDB()
+	user2.InitDB()
 
-	r.Post("/register", user.RegisterUser)
+	r.Post("/register", user2.RegisterUser)
 
 	log.Println("Server starting on port 8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {

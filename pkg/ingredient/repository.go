@@ -1,9 +1,9 @@
 package ingredient
 
 import (
+	"context"
 	"database/sql"
 	"errors"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -31,9 +31,10 @@ func (r Repository) getByReference(ref string) (*Ingredient, error) {
 	return &ingredient, nil
 }
 
-func (r Repository) save(data Ingredient) (*Ingredient, error) {
+func (r Repository) save(ctx context.Context, data AddRequest) (*Ingredient, error) {
 	//data.ID = uuid.NewString()
-	_, err := r.db.NamedExec(`INSERT INTO ingredients (name, id) VALUES (:name, :id)`, data)
+
+	_, err := r.db.NamedExecContext(ctx, `INSERT INTO ingredients (name, id) VALUES (:name, :id)`, data)
 	if err != nil {
 		return nil, err
 	}
@@ -41,9 +42,8 @@ func (r Repository) save(data Ingredient) (*Ingredient, error) {
 	return &data, nil
 }
 
-func (r Repository) delete(data Ingredient) (*Ingredient, error) {
-	data.Name = uuid.NewString()
-	_, err := r.db.Exec(`DELETE FROM ingredients VALUES (:name)`, data)
+func (r Repository) delete(ctx context.Context, id string) (*Ingredient, error) {
+	_, err := r.db.ExecContext(ctx, `DELETE FROM ingredients VALUES (:id)`, id)
 	if err != nil {
 		return nil, err
 	}
