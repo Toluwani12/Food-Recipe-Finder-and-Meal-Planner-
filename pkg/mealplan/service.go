@@ -1,4 +1,4 @@
-package ingredient
+package mealplan
 
 import (
 	liberror "Food/internal/errors"

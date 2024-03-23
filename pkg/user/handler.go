@@ -1,66 +1,76 @@
 package user
 
 import (
-	"encoding/json"
+	liberror "Food/internal/errors"
+	"Food/pkg"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/go-playground/validator/v10"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
 )
 
-var validate = validator.New()
-
-type UserLogin struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
+type Handler struct {
+	svc *Service
 }
 
-func (u UserLogin) Bind(r *http.Request) error {
-	//TODO implement me
-	panic("implement me")
+func NewHandler(svc *Service) *Handler {
+	return &Handler{
+		svc: svc,
+	}
 }
 
-func RegisterUser(w http.ResponseWriter, r *http.Request) {
-	var user User
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+func (h Handler) register(w http.ResponseWriter, r *http.Request) {
+	var addRequest AddRequest
+	if err := addRequest.Bind(r); err != nil {
+		pkg.Render(w, r, err)
 		return
 	}
 
-	if user.Email == "" || user.Password == "" {
-		http.Error(w, "Email and password are required", http.StatusBadRequest)
-		return
-	}
-
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	user, err := h.svc.save(r.Context(), addRequest)
 	if err != nil {
-		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+		pkg.Render(w, r, err)
 		return
 	}
 
-	if _, err = db.Exec("INSERT INTO users (email, password) VALUES ($1, $2)", user.Email, string(hashedPassword)); err != nil {
-		http.Error(w, "Failed to create user", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "User created successfully"})
+	pkg.Render(w, r, pkg.ApiResponse{
+		Data:    user,
+		Message: "user registered successfully",
+		Code:    201,
+	})
 }
 
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	var userLogin UserLogin
+func (h Handler) login(w http.ResponseWriter, r *http.Request) {
+	var request LoginRequest
+	if err := render.Bind(r, &request); err != nil {
+		err := render.Render(w, r, liberror.ErrInvalidLogin)
+		if err != nil {
+			return
+		}
+		return
+	}
+	h.svc.login(r.Context(), request)
+}
+
+func (h Handler) DeleteHandler(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var userLogin User
 	if err := render.Bind(r, &userLogin); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, liberror.ErrInvalidLogin)
 		return
 	}
 
-	if err := validate.Struct(userLogin); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+	// call the delete service to delete by id
+	user, err := h.svc.delete(r.Context(), id)
+	if err != nil {
+		pkg.Render(w, r, nil)
 		return
 	}
 
-}
+	// return a success response to user
+	pkg.Render(w, r, pkg.ApiResponse{
+		Data:    user,
+		Message: "user successfully deleted",
+		Code:    200,
+	})
 
-func ErrInvalidRequest(err error) render.Renderer {
-	return &render.Text{StatusCode: 400, Format: "Invalid request: %s", Data: err.Error()}
 }

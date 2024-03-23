@@ -1,4 +1,4 @@
-package ingredient
+package mealplan
 
 import (
 	"Food/pkg"
