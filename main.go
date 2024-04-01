@@ -1,8 +1,9 @@
 package main
 
 import (
+	"Food/pkg/ingredient"
 	"Food/pkg/recipe"
-	user2 "Food/pkg/user"
+	"Food/pkg/users"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -13,7 +14,7 @@ import (
 func main() {
 	r := chi.NewRouter()
 
-	db, err := sqlx.Open("postgres", "postgres://postgres:postgres@localhost:5432/recipe?sslmode=disable")
+	db, err := sqlx.Open("postgres", "postgres://olusolaalao:postgres@localhost:5432/recipe?sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -25,16 +26,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	checkoutsResource := recipe.NewResource(db)
-	r.Mount("/recipe", checkoutsResource.Router())
+	r.Mount("/recipe", recipe.NewResource(db).Router())
 
-	// Add routes for CheckoutCreateHandler, Update, Delete
+	r.Mount("/ingredient", ingredient.NewResource(db).Router())
 
-	http.ListenAndServe(":8080", r)
-
-	user2.InitDB()
-
-	r.Post("/register", user2.RegisterUser)
+	r.Mount("/users", users.NewResource(db).Router())
 
 	log.Println("Server starting on port 8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {

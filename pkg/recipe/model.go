@@ -1,25 +1,16 @@
 package recipe
 
 import (
-	"encoding/json"
-	"net/http"
+	"time"
 )
 
 type Recipe struct {
-	Id           string `json:"id" db:"id"`
-	Name         string `json:"name" db:"name"`
-	Cuisine      string `json:"cuisine"`
-	MealType     string `json:"mealType"`
-	CookingTime  string `json:"cookingTime"`
-	Instructions string `json:"instructions"`
-	Servings     string `json:"servings"`
+	Id           string    `json:"id"`
+	Name         string    `json:"name"`
+	CookingTime  string    `json:"cooking_time"`
+	Instructions string    `json:"instructions"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdateAt     time.Time `json:"updateAt"`
 }
 
-func (data *Recipe) bind(r *http.Request) error {
-	err := json.NewDecoder(r.Body).Decode(&data)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
+type Recipes = []Recipe

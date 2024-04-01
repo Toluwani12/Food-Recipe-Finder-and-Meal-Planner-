@@ -9,15 +9,16 @@ type ApiResponse struct {
 	Data    interface{} `json:"data,omitempty"`
 	Message string      `json:"message"`
 	Code    int         `json:"code"`
-	Error   string      `json:"error,omitempty"`
+	Error   string      `json:"errors,omitempty"`
 }
 
 type Response struct {
 	Message interface{} `json:"message,omitempty"`
-	Err     interface{} `json:"error,omitempty"`
+	Err     interface{} `json:"errors,omitempty"`
 }
 
 func Render(w http.ResponseWriter, r *http.Request, res interface{}) {
+	w.Header().Set("Content-Type", "application/json")
 	switch res.(type) {
 	case render.Renderer:
 		w.WriteHeader(http.StatusOK)

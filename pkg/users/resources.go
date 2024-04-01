@@ -1,4 +1,4 @@
-package ingredient
+package users
 
 import (
 	"Food/auth"
@@ -24,11 +24,16 @@ func (rs *Resource) Router() *chi.Mux {
 	svc := NewService(repo)
 	hndlr := NewHandler(svc)
 
-	r.Use(auth.AuthMiddleware)
-	r.Post("/add", hndlr.add)
-	r.Delete("/delete/{id}", hndlr.delete)
-	r.Put("/update/{id}", hndlr.update)
-	r.Get("/get/{id}", hndlr.get)
+	r.Post("/login", hndlr.login)
+	r.Post("/", hndlr.save)
+
+	r.Group(func(r chi.Router) {
+		r.Use(auth.AuthMiddleware)
+		r.Get("/{id}", hndlr.get)
+		r.Get("/", hndlr.list)
+		r.Delete("/{id}", hndlr.delete)
+		r.Put("/{id}", hndlr.update)
+	})
 
 	return r
 }

@@ -1,8 +1,12 @@
 package ingredient
 
 import (
+	liberror "Food/internal/errors"
 	"context"
 	"errors"
+	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
+	"time"
 )
 
 type Service struct {
@@ -13,33 +17,62 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s Service) add(ctx context.Context, data AddRequest) (*Ingredient, error) {
-	ingredient, err := s.repo.getByReference(data.Name)
-	if ingredient != nil {
-		return nil, errors.New("ingredient with this reference already exist")
+func (s Service) save(ctx context.Context, data AddRequest) (*Ingredient, error) {
+	ingredient := Ingredient{
+		ID:          uuid.NewString(),
+		Name:        data.Name,
+		Alternative: data.Alternative,
+		Quantity:    data.Quantity,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := s.repo.save(ctx, data)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-
+	resp, err := s.repo.save(ctx, ingredient)
+	return resp, liberror.CoverErr(err,
+		errors.New("service temporarily unavailable. Please try again later"),
+		log.WithFields(log.Fields{"service": "ingredients/save", "repo": "ingredients/save"}).WithError(err))
 }
 
-func (s Service) delete(ctx context.Context, id string) (*Ingredient, error) {
+func (s Service) delete(ctx context.Context, id string) (string, error) {
 	resp, err := s.repo.delete(ctx, id)
+	return resp, liberror.CoverErr(err,
+		errors.New("service temporarily unavailable. Please try again later"),
+		log.WithFields(log.Fields{"service": "ingredients/delete", "repo": "ingredients/delete"}).WithError(err))
+}
 
+func (s Service) update(ctx context.Context, id string, data AddRequest) (*Ingredient, error) {
+	// Check if an ingredient with the same name already exists
+	existingIngredient, err := s.repo.get(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, liberror.CoverErr(err,
+			errors.New("service temporarily unavailable. Please try again later"),
+			log.WithFields(log.Fields{"service": "ingredients/save", "repo": "ingredients/save"}).WithError(err))
+	}
+	ingredient := Ingredient{
+		ID:          id,
+		Name:        data.Name,
+		Alternative: data.Alternative,
+		Quantity:    data.Quantity,
+		CreatedAt:   existingIngredient.CreatedAt,
+		UpdatedAt:   time.Now(),
 	}
 
-	return resp, nil
+	// Update the ingredient
+	updatedIngredient, err := s.repo.update(ctx, ingredient)
+	return updatedIngredient, liberror.CoverErr(err,
+		errors.New("service temporarily unavailable. Please try again later"),
+		log.WithFields(log.Fields{"service": "ingredients/update", "repo": "ingredients/update"}).WithError(err))
+}
 
+func (s Service) get(ctx context.Context, id string) (*Ingredient, error) {
+	resp, err := s.repo.get(ctx, id)
+	return resp, liberror.CoverErr(err,
+		errors.New("service temporarily unavailable. Please try again later"),
+		log.WithFields(log.Fields{"service": "ingredients/get", "repo": "ingredients/get"}).WithError(err))
+}
+
+func (s Service) list(ctx context.Context) (Ingredients, error) {
+	resp, err := s.repo.list(ctx)
+	return resp, liberror.CoverErr(err,
+		errors.New("service temporarily unavailable. Please try again later"),
+		log.WithFields(log.Fields{"service": "ingredients/list", "repo": "ingredients/list"}).WithError(err))
 }

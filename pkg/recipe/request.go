@@ -1,4 +1,4 @@
-package ingredient
+package recipe
 
 import (
 	"fmt"
@@ -9,9 +9,10 @@ import (
 )
 
 type AddRequest struct {
-	Name        string `json:"name"`
-	Alternative string `json:"alternative,omitempty"`
-	Quantity    string `json:"quantity,omitempty"`
+	Id           string `json:"id"`
+	Name         string `json:"name"`
+	CookingTime  string `json:"cooking_time"`
+	Instructions string `json:"instructions"`
 }
 
 func (v *AddRequest) Bind(r *http.Request) error {
