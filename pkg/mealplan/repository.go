@@ -17,11 +17,11 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (r Repository) get(ctx context.Context, id string) (*Ingredient, error) {
-	var ingredient Ingredient
+func (r Repository) get(ctx context.Context, id string) (*MealPlan, error) {
+	var mealPlan MealPlan
 
 	// Use Get to query and automatically scan the result into the struct
-	err := r.db.GetContext(ctx, &ingredient, "SELECT * FROM ingredients WHERE id = $1", id)
+	err := r.db.GetContext(ctx, &mealPlan, "SELECT * FROM mealPlans WHERE id = $1", id)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -29,14 +29,14 @@ func (r Repository) get(ctx context.Context, id string) (*Ingredient, error) {
 		}
 	}
 
-	return &ingredient, errors.Wrap(err, "db.GetContext failed")
+	return &mealPlan, errors.Wrap(err, "db.GetContext failed")
 }
 
-func (r Repository) getByName(ctx context.Context, name string) (*Ingredient, error) {
-	var ingredient Ingredient
+func (r Repository) getById(ctx context.Context, id string) (*MealPlan, error) {
+	var mealPlan MealPlan
 
 	// Use Get to query and automatically scan the result into the struct
-	err := r.db.GetContext(ctx, &ingredient, "SELECT * FROM ingredients WHERE name = $1", name)
+	err := r.db.GetContext(ctx, &mealPlan, "SELECT * FROM mealPlans WHERE id = $1", id)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -44,21 +44,21 @@ func (r Repository) getByName(ctx context.Context, name string) (*Ingredient, er
 		}
 	}
 
-	return &ingredient, errors.Wrap(err, "db.GetContext failed")
+	return &mealPlan, errors.Wrap(err, "db.GetContext failed")
 }
 
-func (r Repository) save(ctx context.Context, data Ingredient) (*Ingredient, error) {
-	var ingredient *Ingredient
-	err := r.db.GetContext(ctx, ingredient, "SELECT * FROM ingredients WHERE name = $1", data.Name)
+func (r Repository) save(ctx context.Context, data MealPlan) (*MealPlan, error) {
+	var mealPlan *MealPlan
+	err := r.db.GetContext(ctx, mealPlan, "SELECT * FROM mealPlans WHERE id = $1", data.Id)
 
-	if ingredient != nil || !errors.Is(err, sql.ErrNoRows) {
+	if mealPlan != nil || !errors.Is(err, sql.ErrNoRows) {
 		return nil, liberror.New("name already exist", http.StatusBadRequest)
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "GetContext")
 	}
 
-	res, err := r.db.NamedExecContext(ctx, `INSERT INTO ingredients (name, id, alternative, quantity, created_at, updated_at) VALUES (:name, :id, :alternative, :quantity, :created_at, :updated_at)`, data)
+	res, err := r.db.NamedExecContext(ctx, `INSERT INTO mealPlans (id, date, mealtype) VALUES (:id, :date, :meal_type)`, data)
 	if count, err := res.RowsAffected(); count != 1 {
 		return nil, errors.Wrap(err, "RowsAffected")
 	}
@@ -67,14 +67,14 @@ func (r Repository) save(ctx context.Context, data Ingredient) (*Ingredient, err
 }
 
 func (r Repository) delete(ctx context.Context, id string) (string, error) {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM ingredients where id = $1`, id)
+	_, err := r.db.ExecContext(ctx, `DELETE FROM mealPlans where id = $1`, id)
 	return id, errors.Wrap(err, "ExecContext")
 }
 
 // for this update, it'd need to collect the new data and probably bind it
-func (r Repository) update(ctx context.Context, data Ingredient) (*Ingredient, error) {
+func (r Repository) update(ctx context.Context, data MealPlan) (*MealPlan, error) {
 	// Construct the update query with newData fields and the id
-	res, err := r.db.ExecContext(ctx, "UPDATE ingredients SET name = $1, quantity = $2,  alternative = $3, updated_at = $4 WHERE id = $5", data.Name, data.Quantity, data.Alternative, data.UpdatedAt, data.ID)
+	res, err := r.db.ExecContext(ctx, "UPDATE mealPlans SET date = $1,  meal_type = $2 WHERE id = $3", data.Date, data.MealType, data.Id)
 	if count, err := res.RowsAffected(); count != 1 {
 		return nil, errors.Wrap(err, "RowsAffected")
 	}
@@ -82,9 +82,9 @@ func (r Repository) update(ctx context.Context, data Ingredient) (*Ingredient, e
 	return &data, errors.Wrap(err, "Db.NamedExecContext")
 }
 
-func (r Repository) list(ctx context.Context) ([]Ingredient, error) {
-	var ingredients []Ingredient
-	err := r.db.GetContext(ctx, &ingredients, "SELECT * FROM ingredients")
+func (r Repository) list(ctx context.Context) ([]MealPlan, error) {
+	var mealPlans []MealPlan
+	err := r.db.GetContext(ctx, &mealPlans, "SELECT * FROM mealPlans")
 
-	return ingredients, errors.Wrap(err, "GetContext")
+	return mealPlans, errors.Wrap(err, "GetContext")
 }

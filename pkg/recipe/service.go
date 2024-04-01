@@ -31,6 +31,20 @@ func (s Service) save(ctx context.Context, data AddRequest) (*Recipe, error) {
 		log.WithFields(log.Fields{"service": "recipes/save", "repo": "recipes/save"}).WithError(err))
 }
 
+func (s Service) update(ctx context.Context, id string, data AddRequest) (*Recipe, error) {
+	recipe := Recipe{
+		Id:           id,
+		Name:         data.Name,
+		CookingTime:  data.CookingTime,
+		Instructions: data.Instructions,
+		UpdateAt:     time.Now(),
+	}
+	resp, err := s.repo.update(ctx, recipe)
+	return resp, liberror.CoverErr(err,
+		errors.New("service temporarily unavailable. Please try again later"),
+		log.WithFields(log.Fields{"service": "recipes/update", "repo": "recipes/update"}).WithError(err))
+}
+
 func (s Service) delete(ctx context.Context, id string) (string, error) {
 	resp, err := s.repo.delete(ctx, id)
 	return resp, liberror.CoverErr(err,

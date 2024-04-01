@@ -20,7 +20,6 @@ func NewRepository(db *sqlx.DB) *Repository {
 func (r Repository) get(ctx context.Context, id string) (*Ingredient, error) {
 	var ingredient Ingredient
 
-	// Use Get to query and automatically scan the result into the struct
 	err := r.db.GetContext(ctx, &ingredient, "SELECT * FROM ingredients WHERE id = $1", id)
 
 	if err != nil {
@@ -35,7 +34,6 @@ func (r Repository) get(ctx context.Context, id string) (*Ingredient, error) {
 func (r Repository) getByName(ctx context.Context, name string) (*Ingredient, error) {
 	var ingredient Ingredient
 
-	// Use Get to query and automatically scan the result into the struct
 	err := r.db.GetContext(ctx, &ingredient, "SELECT * FROM ingredients WHERE name = $1", name)
 
 	if err != nil {
@@ -71,9 +69,7 @@ func (r Repository) delete(ctx context.Context, id string) (string, error) {
 	return id, errors.Wrap(err, "ExecContext")
 }
 
-// for this update, it'd need to collect the new data and probably bind it
 func (r Repository) update(ctx context.Context, data Ingredient) (*Ingredient, error) {
-	// Construct the update query with newData fields and the id
 	res, err := r.db.ExecContext(ctx, "UPDATE ingredients SET name = $1, quantity = $2,  alternative = $3, updated_at = $4 WHERE id = $5", data.Name, data.Quantity, data.Alternative, data.UpdatedAt, data.ID)
 	if count, err := res.RowsAffected(); count != 1 {
 		return nil, errors.Wrap(err, "RowsAffected")

@@ -2,7 +2,6 @@ package ingredient
 
 import (
 	"fmt"
-	"github.com/go-chi/render"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
 	"net/http"
@@ -16,9 +15,6 @@ type AddRequest struct {
 }
 
 func (v *AddRequest) Bind(r *http.Request) error {
-	if err := render.Bind(r, v); err != nil {
-		return err
-	}
 
 	err1 := validate.Validate(
 		&validators.StringIsPresent{Name: "name", Field: v.Name, Message: fmt.Sprintf("%s is missing", "name")},

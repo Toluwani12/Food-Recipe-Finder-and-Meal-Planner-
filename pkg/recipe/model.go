@@ -10,6 +10,7 @@ type Recipe struct {
 	CookingTime  string    `json:"cooking_time"`
 	Instructions string    `json:"instructions"`
 	CreatedAt    time.Time `json:"created_at"`
+	UpdateAt     time.Time `json:"updateAt"`
 }
 
 type Recipes = []Recipe

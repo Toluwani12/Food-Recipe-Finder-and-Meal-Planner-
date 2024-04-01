@@ -74,7 +74,7 @@ type ErrResponse struct {
 	Err            error  `json:"-"`                 // low-level runtime error
 	HTTPStatusCode int    `json:"-"`                 // http response status code
 	AppCode        int64  `json:"-"`                 // application-specific error code
-	StatusText     string `json:"status"`            // user-level status message
+	StatusText     string `json:"status"`            // users-level status message
 	ErrorText      string `json:"message,omitempty"` // application-level error message, for debugging
 }
 

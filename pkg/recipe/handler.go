@@ -3,6 +3,7 @@ package recipe
 import (
 	"Food/pkg"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"net/http"
 )
 
@@ -20,8 +21,8 @@ func (h Handler) add(w http.ResponseWriter, r *http.Request) {
 
 	// binding or extracting the data from the request
 	var data AddRequest
-	if err := data.Bind(r); err != nil {
-		pkg.Render(w, r, nil)
+	if err := render.Bind(r, &data); err != nil {
+		pkg.Render(w, r, err)
 		return
 	}
 
@@ -32,7 +33,7 @@ func (h Handler) add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// returning the response to the user
+	// returning the response to the users
 	pkg.Render(w, r, pkg.ApiResponse{
 		Data:    recipe,
 		Message: "recipe added successfully",
@@ -42,17 +43,15 @@ func (h Handler) add(w http.ResponseWriter, r *http.Request) {
 
 func (h Handler) delete(w http.ResponseWriter, r *http.Request) {
 
-	// extract id from url param
 	id := chi.URLParam(r, "id")
 
-	// call the delete service to delete by id
 	recipe, err := h.svc.delete(r.Context(), id)
 	if err != nil {
 		pkg.Render(w, r, nil)
 		return
 	}
 
-	// return a success response to user
+	// return a success response to users
 	pkg.Render(w, r, pkg.ApiResponse{
 		Data:    recipe,
 		Message: "recipe successfully deleted",
@@ -60,34 +59,29 @@ func (h Handler) delete(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-//func (h Handler) update(w http.ResponseWriter, r *http.Request) {
-//	// Extract the ID from the URL
-//	id := chi.URLParam(r, "id")
-//
-//	// Binding or extracting the data from the request
-//	var data AddRequest
-//	if err := data.Bind(r); err != nil {
-//		pkg.Render(w, r, nil)
-//		return
-//	}
-//
-//	// Update the data through the update service
-//	recipe, err := h.svc.update(r.Context(), id, data)
-//	if err != nil {
-//		// Handle errors
-//		pkg.Render(w, r, nil)
-//		return
-//	}
-//
-//	// Returning the response to the user
-//	pkg.Render(w, r, pkg.ApiResponse{
-//		Data:    recipe,
-//		Message: "recipe updated successfully",
-//		Code:    200,
-//	})
-//}
+func (h Handler) update(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
 
-func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
+	var data AddRequest
+	if err := render.Bind(r, &data); err != nil {
+		pkg.Render(w, r, err)
+		return
+	}
+
+	recipe, err := h.svc.update(r.Context(), id, data)
+	if err != nil {
+		pkg.Render(w, r, nil)
+		return
+	}
+
+	pkg.Render(w, r, pkg.ApiResponse{
+		Data:    recipe,
+		Message: "recipe updated successfully",
+		Code:    200,
+	})
+}
+
+func (h Handler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	// Get the recipe from the service layer
@@ -106,7 +100,7 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
+func (h Handler) list(w http.ResponseWriter, r *http.Request) {
 	recipe, err := h.svc.list(r.Context())
 	if err != nil {
 		// If an errors occurs, send an appropriate HTTP response

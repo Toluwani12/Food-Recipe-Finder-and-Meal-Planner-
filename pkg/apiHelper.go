@@ -18,6 +18,7 @@ type Response struct {
 }
 
 func Render(w http.ResponseWriter, r *http.Request, res interface{}) {
+	w.Header().Set("Content-Type", "application/json")
 	switch res.(type) {
 	case render.Renderer:
 		w.WriteHeader(http.StatusOK)

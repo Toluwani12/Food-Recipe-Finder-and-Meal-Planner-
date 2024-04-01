@@ -58,7 +58,7 @@ func (r Repository) save(ctx context.Context, data Recipe) (*Recipe, error) {
 		return nil, errors.Wrap(err, "GetContext")
 	}
 
-	res, err := r.db.NamedExecContext(ctx, `INSERT INTO recipes (name, id, alternative, quantity, created_at, updated_at) VALUES (:name, :id, :alternative, :quantity, :created_at, :updated_at)`, data)
+	res, err := r.db.NamedExecContext(ctx, `INSERT INTO recipes (id, name, cooking_time, instructions, created_at, updated_at) VALUES (:id, :name, :cooking_time, :instructions, :created_at, :updated_at)`, data)
 	if count, err := res.RowsAffected(); count != 1 {
 		return nil, errors.Wrap(err, "RowsAffected")
 	}
@@ -76,4 +76,13 @@ func (r Repository) list(ctx context.Context) ([]Recipe, error) {
 	err := r.db.GetContext(ctx, &recipes, "SELECT * FROM recipes")
 
 	return recipes, errors.Wrap(err, "GetContext")
+}
+
+func (r Repository) update(ctx context.Context, data Recipe) (*Recipe, error) {
+	res, err := r.db.ExecContext(ctx, "UPDATE recipes SET name = $1, cooking_time = $2, instructions = $3, updated_at = $4 WHERE id = $5", data.Name, data.CookingTime, data.Instructions, data.UpdateAt, data.Id)
+	if count, err := res.RowsAffected(); count != 1 {
+		return nil, errors.Wrap(err, "RowsAffected")
+	}
+
+	return &data, errors.Wrap(err, "Db.NamedExecContext")
 }
