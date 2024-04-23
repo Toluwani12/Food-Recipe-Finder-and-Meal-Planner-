@@ -26,9 +26,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	r.Mount("/recipe", recipe.NewResource(db).Router())
+	r.Mount("/recipes", recipe.NewResource(db).Router())
 
-	r.Mount("/ingredient", ingredient.NewResource(db).Router())
+	r.Mount("/ingredients", ingredient.NewResource(db).Router())
 
 	r.Mount("/users", users.NewResource(db).Router())
 

@@ -1,4 +1,4 @@
-package mealplan
+package user_preference
 
 import (
 	"github.com/jmoiron/sqlx"

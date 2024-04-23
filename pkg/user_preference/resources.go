@@ -1,4 +1,4 @@
-package recipe
+package user_preference
 
 import (
 	"github.com/go-chi/chi/v5"

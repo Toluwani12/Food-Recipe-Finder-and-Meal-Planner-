@@ -1,4 +1,4 @@
-package mealplan
+package user_preference
 
 type Service struct {
 	repo *Repository

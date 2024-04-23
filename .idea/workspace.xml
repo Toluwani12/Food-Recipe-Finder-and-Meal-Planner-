@@ -4,32 +4,31 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3a5342c9-068d-46ec-a36d-27f3f05f0c6e" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/auth/auth_middleware.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/db/migrations/000001_create_recipe_table.down.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/db/migrations/000001_create_recipe_table.up.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pkg/users/resources.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/Food-Recipe-Finder-and-Meal-Planner-.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db/migrations/000001_create_recipe.down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/db/migrations/000001_create_recipe.up.sql" beforeDir="false" />
+    <list default="true" id="3a5342c9-068d-46ec-a36d-27f3f05f0c6e" name="Changes" comment="feat: add implement cruds">
+      <change afterPath="$PROJECT_DIR$/pkg/user_preference/handler.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pkg/user_preference/model.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pkg/user_preference/repository.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pkg/user_preference/request.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pkg/user_preference/resources.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pkg/user_preference/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/73ba12ed-4240-4fb4-9a62-2f79a0b4e5d7.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/73ba12ed-4240-4fb4-9a62-2f79a0b4e5d7.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/db/migrations/000001_create_recipe_table.up.sql" beforeDir="false" afterPath="$PROJECT_DIR$/db/migrations/000001_create_recipe_table.up.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/db/migrations/000002_create_user_table.up.sql" beforeDir="false" afterPath="$PROJECT_DIR$/db/migrations/000002_create_user_table.up.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/db/migrations/000003_create_mealplan_table.down.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/db/migrations/000003_create_mealplan_table.up.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/db/migrations/000004_create_ingredient_table.up.sql" beforeDir="false" afterPath="$PROJECT_DIR$/db/migrations/000004_create_ingredient_table.up.sql" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/errors/errors.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/errors/errors.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/apiHelper.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/apiHelper.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/ingredient/handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/ingredient/handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/ingredient/model.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/ingredient/model.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/ingredient/repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/ingredient/repository.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/ingredient/request.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/ingredient/request.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/ingredient/resources.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/ingredient/resources.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/mealplan/handler.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/ingredient/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/ingredient/service.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/mealplan/model.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/mealplan/model.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/mealplan/repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/mealplan/repository.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/mealplan/request.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/mealplan/request.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/mealplan/resources.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/mealplan/resources.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/mealplan/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/mealplan/service.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/recipe/handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/recipe/handler.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/recipe/model.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/recipe/model.go" afterDir="false" />
@@ -37,12 +36,6 @@
       <change beforePath="$PROJECT_DIR$/pkg/recipe/request.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/recipe/request.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/recipe/resources.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/recipe/resources.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/recipe/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/recipe/service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/user/auth.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/users/auth.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/user/handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/users/handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/user/model.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/users/model.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/user/repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/users/repository.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/user/request.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/users/request.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/user/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/users/service.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,30 +54,35 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Go Build.go build Food.executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.go.formatter.settings.were.checked": "true",
-    "RunOnceActivity.go.migrated.go.modules.settings": "true",
-    "RunOnceActivity.go.modules.automatic.dependencies.download": "true",
-    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
-    "git-widget-placeholder": "new",
-    "go.import.settings.migrated": "true",
-    "go.sdk.automatically.set": "true",
-    "last_opened_file_path": "/Users/olusolaalao/Downloads/Food-Recipe-Finder-and-Meal-Planner- 2",
-    "node.js.detected.package.eslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.pluginManager"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Go Build.go build Food.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.modules.automatic.dependencies.download&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;new&quot;,
+    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
+    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/olusolaalao/Downloads/Food-Recipe-Finder-and-Meal-Planner- 2/pkg/user_preference&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "postgresql"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;postgresql&quot;
     ]
   }
-}]]></component>
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/pkg/user_preference" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration name="go build Food" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="Food-Recipe-Finder-and-Meal-Planner- 2" />
@@ -111,6 +109,10 @@
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="feat: add implement cruds" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: add implement cruds" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>

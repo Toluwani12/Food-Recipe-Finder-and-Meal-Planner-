@@ -1,6 +1,7 @@
 package recipe
 
 import (
+	"Food/pkg/ingredient"
 	"fmt"
 	"github.com/gobuffalo/validate"
 	"github.com/gobuffalo/validate/validators"
@@ -9,10 +10,11 @@ import (
 )
 
 type AddRequest struct {
-	Id           string `json:"id"`
-	Name         string `json:"name"`
-	CookingTime  string `json:"cooking_time"`
-	Instructions string `json:"instructions"`
+	Name         string                  `json:"name"`
+	Description  string                  `json:"description"`
+	CookingTime  int                     `json:"cooking_time"` // minutes
+	Instructions string                  `json:"instructions"`
+	Ingredients  []ingredient.AddRequest `json:"ingredients"`
 }
 
 func (v *AddRequest) Bind(r *http.Request) error {
@@ -27,4 +29,13 @@ func (v *AddRequest) Bind(r *http.Request) error {
 	}
 
 	return nil
+}
+
+type GetResponse struct {
+	ID           int                     `json:"id"`
+	Name         string                  `json:"name"`
+	Description  string                  `json:"description"`
+	CookingTime  int                     `json:"cooking_time"`
+	Instructions string                  `json:"instructions"`
+	Ingredients  []ingredient.AddRequest `json:"ingredients"`
 }

@@ -1,8 +1,8 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE ingredients (
-                             id TEXT PRIMARY KEY,
+                             id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
                              name TEXT NOT NULL,
-                             alternative TEXT,
-                             quantity TEXT,
-                             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                             updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                             created_at TIMESTAMP,
+                             updated_at TIMESTAMP
 );

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
+	"net/http"
 	"time"
 )
 
@@ -37,7 +38,7 @@ func (s Service) update(ctx context.Context, id string, data AddRequest) (*Recip
 		Name:         data.Name,
 		CookingTime:  data.CookingTime,
 		Instructions: data.Instructions,
-		UpdateAt:     time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 	resp, err := s.repo.update(ctx, recipe)
 	return resp, liberror.CoverErr(err,
@@ -64,4 +65,14 @@ func (s Service) list(ctx context.Context) (Recipes, error) {
 	return resp, liberror.CoverErr(err,
 		errors.New("service temporarily unavailable. Please try again later"),
 		log.WithFields(log.Fields{"service": "recipes/list", "repo": "recipes/list"}).WithError(err))
+}
+
+func (s Service) findRecipes(ctx context.Context, ingredients []string) ([]Recipe, error) {
+	if len(ingredients) == 0 {
+		return nil, liberror.New("no ingredients provided", http.StatusBadRequest)
+	}
+	recipes, err := s.repo.findRecipes(ctx, ingredients)
+	return recipes, liberror.CoverErr(err,
+		errors.New("service temporarily unavailable. Please try again later"),
+		log.WithFields(log.Fields{"service": "recipes/findRecipes", "repo": "recipes/findRecipes"}).WithError(err))
 }

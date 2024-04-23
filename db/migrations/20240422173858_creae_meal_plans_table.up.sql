@@ -1,0 +1,16 @@
+--
+-- CREATE TYPE meal_type AS ENUM ('breakfast', 'lunch', 'dinner');
+-- CREATE TYPE day_of_week AS ENUM ('sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday');
+--
+-- CREATE TABLE meal_plans (
+--                             id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+--                             user_id UUID REFERENCES users(id),
+--                             day_of_week day_of_week,
+--
+--                             meal_type meal_type,
+--                             recipe_id UUID REFERENCES recipes(id),
+--                             week_start_date DATE NOT NULL,
+--                             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--                             updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+-- );
+--

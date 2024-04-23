@@ -9,9 +9,9 @@ import (
 )
 
 type AddRequest struct {
-	Name        string `json:"name"`
-	Alternative string `json:"alternative,omitempty"`
-	Quantity    string `json:"quantity,omitempty"`
+	ID           int      `json:"id,omitempty"` // Included for updates, omitted for creation
+	Name         string   `json:"name"`
+	Alternatives []string `json:"alternative,omitempty"`
 }
 
 func (v *AddRequest) Bind(r *http.Request) error {
@@ -26,4 +26,10 @@ func (v *AddRequest) Bind(r *http.Request) error {
 	}
 
 	return nil
+}
+
+type GetResponse struct {
+	ID           int      `json:"id"`
+	Name         string   `json:"name"`
+	Alternatives []string `json:"alternatives"`
 }

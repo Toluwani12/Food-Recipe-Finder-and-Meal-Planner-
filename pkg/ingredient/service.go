@@ -4,7 +4,6 @@ import (
 	liberror "Food/internal/errors"
 	"context"
 	"errors"
-	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
@@ -19,12 +18,11 @@ func NewService(repo *Repository) *Service {
 
 func (s Service) save(ctx context.Context, data AddRequest) (*Ingredient, error) {
 	ingredient := Ingredient{
-		ID:          uuid.NewString(),
-		Name:        data.Name,
-		Alternative: data.Alternative,
-		Quantity:    data.Quantity,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		Name:         data.Name,
+		Alternatives: data.Alternatives,
+		Quantity:     data.Quantity,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 	resp, err := s.repo.save(ctx, ingredient)
 	return resp, liberror.CoverErr(err,
@@ -48,12 +46,12 @@ func (s Service) update(ctx context.Context, id string, data AddRequest) (*Ingre
 			log.WithFields(log.Fields{"service": "ingredients/save", "repo": "ingredients/save"}).WithError(err))
 	}
 	ingredient := Ingredient{
-		ID:          id,
-		Name:        data.Name,
-		Alternative: data.Alternative,
-		Quantity:    data.Quantity,
-		CreatedAt:   existingIngredient.CreatedAt,
-		UpdatedAt:   time.Now(),
+		ID:           id,
+		Name:         data.Name,
+		Alternatives: data.Alternatives,
+		Quantity:     data.Quantity,
+		CreatedAt:    existingIngredient.CreatedAt,
+		UpdatedAt:    time.Now(),
 	}
 
 	// Update the ingredient

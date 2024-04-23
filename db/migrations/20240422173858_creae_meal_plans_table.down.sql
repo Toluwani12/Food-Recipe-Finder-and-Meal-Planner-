@@ -1,0 +1,4 @@
+-- DROP TABLE IF EXISTS weekly_meal_plans;
+--
+-- DROP TYPE IF EXISTS meal_type;
+-- DROP TYPE IF EXISTS day_of_week;

@@ -1,5 +1,8 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE recipes (
-                         id TEXT PRIMARY KEY,
+                         id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+                         description TEXT,
                          name TEXT NOT NULL,
                          cooking_time TEXT,
                          instructions TEXT,
