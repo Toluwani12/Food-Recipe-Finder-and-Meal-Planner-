@@ -1,6 +1,7 @@
 package user_preference
 
 import (
+	"Food/auth"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 )
@@ -23,13 +24,11 @@ func (rs *Resource) Router() *chi.Mux {
 	svc := NewService(repo)
 	hndlr := NewHandler(svc)
 
-	//r.Use(auth.AuthMiddleware)
+	r.Use(auth.AuthMiddleware)
 	r.Post("/", hndlr.add)
-	r.Delete("/{id}", hndlr.delete)
-	r.Put("/{id}", hndlr.update)
-	r.Get("/{id}", hndlr.get)
-	r.Get("/", hndlr.list)
-	r.Get("/find_recipes", hndlr.findRecipesHandler)
+	r.Delete("/", hndlr.delete)
+	r.Put("/", hndlr.update)
+	r.Get("/", hndlr.get)
 
 	return r
 }

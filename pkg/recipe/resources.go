@@ -1,6 +1,7 @@
 package recipe
 
 import (
+	"Food/auth"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 )
@@ -24,12 +25,16 @@ func (rs *Resource) Router() *chi.Mux {
 	hndlr := NewHandler(svc)
 
 	//r.Use(auth.AuthMiddleware)
-	r.Post("/", hndlr.add)
-	r.Delete("/{id}", hndlr.delete)
-	r.Put("/{id}", hndlr.update)
+
+	//r.Put("/{id}", hndlr.update)
 	r.Get("/{id}", hndlr.get)
 	r.Get("/", hndlr.list)
-	r.Get("/find_recipes", hndlr.findRecipesHandler)
+	r.Post("/search", hndlr.search)
+	r.Group(func(r chi.Router) {
+		r.Use(auth.AuthMiddleware)
+		r.Post("/", hndlr.save)
+		r.Delete("/{id}", hndlr.delete)
+	})
 
 	return r
 }

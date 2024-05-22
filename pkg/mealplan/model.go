@@ -5,11 +5,11 @@ import (
 )
 
 type MealPlan struct {
-	ID            int       `json:"id"`
-	UserID        int       `json:"user_id"`
+	ID            string    `json:"id"`
+	UserID        string    `json:"user_id"`
 	DayOfWeek     DayOfWeek `json:"day_of_week"` // This could also be an enum.
 	MealType      MealType  `json:"meal_type"`
-	RecipeID      int       `json:"recipe_id"`
+	RecipeID      string    `json:"recipe_id"`
 	WeekStartDate time.Time `json:"week_start_date"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`

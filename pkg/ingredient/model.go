@@ -1,6 +1,8 @@
 package ingredient
 
 import (
+	"Food/internal/errors"
+	"encoding/json"
 	"time"
 )
 
@@ -14,4 +16,13 @@ type Ingredient struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
-type Ingredients = []Ingredient
+type Ingredients []Ingredient
+
+func (i *Ingredients) Scan(value interface{}) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(bytes, i)
+}

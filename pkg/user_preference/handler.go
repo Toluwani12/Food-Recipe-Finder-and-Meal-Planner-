@@ -1,13 +1,11 @@
 package user_preference
 
 import (
-	"Food/internal/errors"
 	"Food/pkg"
-	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
+	log "github.com/sirupsen/logrus"
 	"net/http"
-	"strings"
 )
 
 type Handler struct {
@@ -21,7 +19,9 @@ func NewHandler(svc *Service) *Handler {
 }
 
 func (h Handler) add(w http.ResponseWriter, r *http.Request) {
-
+	//extract the user id from the request
+	userID := r.Context().Value("user_id").(string)
+	log.Infoln("user id", userID)
 	// binding or extracting the data from the request
 	var data AddRequest
 	if err := render.Bind(r, &data); err != nil {
@@ -30,16 +30,15 @@ func (h Handler) add(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// add the data through the add service
-	recipe, err := h.svc.save(r.Context(), data)
+	err := h.svc.save(r.Context(), userID, data)
 	if err != nil {
-		pkg.Render(w, r, nil)
+		pkg.Render(w, r, err)
 		return
 	}
 
 	// returning the response to the users
 	pkg.Render(w, r, pkg.ApiResponse{
-		Data:    recipe,
-		Message: "recipe added successfully",
+		Message: "user preference added successfully",
 		Code:    201,
 	})
 }
@@ -48,16 +47,15 @@ func (h Handler) delete(w http.ResponseWriter, r *http.Request) {
 
 	id := chi.URLParam(r, "id")
 
-	recipe, err := h.svc.delete(r.Context(), id)
+	err := h.svc.delete(r.Context(), id)
 	if err != nil {
-		pkg.Render(w, r, nil)
+		pkg.Render(w, r, err)
 		return
 	}
 
 	// return a success response to users
 	pkg.Render(w, r, pkg.ApiResponse{
-		Data:    recipe,
-		Message: "recipe successfully deleted",
+		Message: "user preference deleted successfully",
 		Code:    200,
 	})
 }
@@ -71,14 +69,13 @@ func (h Handler) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	recipe, err := h.svc.update(r.Context(), id, data)
+	err := h.svc.update(r.Context(), id, data)
 	if err != nil {
-		pkg.Render(w, r, nil)
+		pkg.Render(w, r, err)
 		return
 	}
 
 	pkg.Render(w, r, pkg.ApiResponse{
-		Data:    recipe,
 		Message: "recipe updated successfully",
 		Code:    200,
 	})
@@ -90,8 +87,7 @@ func (h Handler) get(w http.ResponseWriter, r *http.Request) {
 	// Get the recipe from the service layer
 	recipe, err := h.svc.get(r.Context(), id)
 	if err != nil {
-		// If an errors occurs, send an appropriate HTTP response
-		http.Error(w, err.Error(), http.StatusNotFound)
+		pkg.Render(w, r, err)
 		return
 	}
 
@@ -103,50 +99,17 @@ func (h Handler) get(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h Handler) list(w http.ResponseWriter, r *http.Request) {
-	recipe, err := h.svc.list(r.Context())
-	if err != nil {
-		// If an errors occurs, send an appropriate HTTP response
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
-
-	pkg.Render(w, r, pkg.ApiResponse{
-		Data:    recipe,
-		Message: "Recipe retrieved successfully",
-		Code:    http.StatusOK,
-	})
-}
-
-func (h Handler) findRecipesHandler(w http.ResponseWriter, r *http.Request) {
-	// Parse ingredients from query parameter, expecting comma-separated values
-	queryValues := r.URL.Query()
-	ingredientsParam := queryValues.Get("ingredients")
-	if ingredientsParam == "" {
-		pkg.Render(w, r, errors.New("ingredients parameter is required"))
-		return
-	}
-	ingredients := strings.Split(ingredientsParam, ",")
-
-	// Call the service layer to find recipes
-	recipes, err := h.svc.findRecipes(r.Context(), ingredients)
-	if err != nil {
-		pkg.Render(w, r, err)
-		return
-	}
-	if len(recipes) == 0 {
-		pkg.Render(w, r, errors.ErrWithCustomText(nil, "No recipes found", http.StatusNotFound))
-		return
-	}
-
-	response, err := json.Marshal(recipes)
-	if err != nil {
-		pkg.Render(w, r, errors.ErrWithCustomText(err, "Error marshalling response", http.StatusInternalServerError))
-		return
-	}
-	pkg.Render(w, r, pkg.ApiResponse{
-		Data:    response,
-		Message: "Recipes found successfully",
-		Code:    http.StatusOK,
-	})
-}
+//func (h Handler) list(w http.ResponseWriter, r *http.Request) {
+//	recipe, err := h.svc.list(r.Context())
+//	if err != nil {
+//		// If an errors occurs, send an appropriate HTTP response
+//		http.Error(w, err.Error(), http.StatusNotFound)
+//		return
+//	}
+//
+//	pkg.Render(w, r, pkg.ApiResponse{
+//		Data:    recipe,
+//		Message: "Recipe retrieved successfully",
+//		Code:    http.StatusOK,
+//	})
+//}

@@ -9,15 +9,16 @@ import (
 )
 
 type AddRequest struct {
-	Name            string `json:"name"`
-	Email           string `json:"email"`
+	Username        string `json:"username" db:"username"`
+	Email           string `json:"email" db:"email"`
 	Password        string `json:"password"`
 	ConfirmPassword string `json:"confirm_password"`
+	PasswordHash    string `db:"password_hash"`
 }
 
 func (v *AddRequest) Bind(r *http.Request) error {
 	err1 := validate.Validate(
-		&validators.StringIsPresent{Name: "name", Field: v.Name, Message: fmt.Sprintf("%v is missing", "name")},
+		&validators.StringIsPresent{Name: "username", Field: v.Username, Message: fmt.Sprintf("%v is missing", "username")},
 		&validators.EmailIsPresent{Name: "email", Field: v.Email, Message: fmt.Sprintf("%v is invalid", "email")},
 		&validators.StringIsPresent{Name: "password", Field: v.Password, Message: fmt.Sprintf("%v is missing", "password")},
 		&validators.StringIsPresent{Name: "confirm_password", Field: v.ConfirmPassword},
@@ -29,7 +30,7 @@ func (v *AddRequest) Bind(r *http.Request) error {
 		},
 	)
 
-	v.Name = strings.TrimSpace(strings.ToLower(v.Name))
+	v.Username = strings.TrimSpace(strings.ToLower(v.Username))
 	if err1.HasAny() {
 		return err1
 	}

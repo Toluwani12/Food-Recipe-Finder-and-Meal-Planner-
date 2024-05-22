@@ -10,7 +10,7 @@ type AddRequest struct {
 }
 
 type GetResponse struct {
-	UserID        int                                     `json:"user_id"`
-	WeekStartDate string                                  `json:"week_start_date"`
-	Meals         map[string]map[string]recipe.AddRequest `json:"meals"`
+	UserID        int                                  `json:"user_id"`
+	WeekStartDate string                               `json:"week_start_date"`
+	Meals         map[string]map[string]recipe.Recipes `json:"meals"`
 }
