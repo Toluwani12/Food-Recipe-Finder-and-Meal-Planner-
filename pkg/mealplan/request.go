@@ -1,7 +1,16 @@
 package mealplan
 
+import (
+	"Food/pkg/recipe"
+)
+
 type AddRequest struct {
-	MealType string `json:"mealType"`
-	Date     string `json:"date"`
-	Quantity string `json:"quantity,omitempty"`
+	WeekStartDate string                    `json:"week_start_date"` // ISO8601 date format
+	Meals         map[string]map[string]int `json:"meals"`           // Nested map [dayOfWeek][mealType]recipeId
+}
+
+type GetResponse struct {
+	UserID        int                                  `json:"user_id"`
+	WeekStartDate string                               `json:"week_start_date"`
+	Meals         map[string]map[string]recipe.Recipes `json:"meals"`
 }

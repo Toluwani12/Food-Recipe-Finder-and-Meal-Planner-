@@ -70,7 +70,7 @@ func (r Repository) delete(ctx context.Context, id string) (string, error) {
 }
 
 func (r Repository) update(ctx context.Context, data Ingredient) (*Ingredient, error) {
-	res, err := r.db.ExecContext(ctx, "UPDATE ingredients SET name = $1, quantity = $2,  alternative = $3, updated_at = $4 WHERE id = $5", data.Name, data.Quantity, data.Alternative, data.UpdatedAt, data.ID)
+	res, err := r.db.ExecContext(ctx, "UPDATE ingredients SET name = $1, quantity = $2,  alternative = $3, updated_at = $4 WHERE id = $5", data.Name, data.Quantity, data.Alternatives, data.UpdatedAt, data.ID)
 	if count, err := res.RowsAffected(); count != 1 {
 		return nil, errors.Wrap(err, "RowsAffected")
 	}

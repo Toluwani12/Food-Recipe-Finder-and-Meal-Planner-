@@ -24,12 +24,18 @@ func (rs *Resource) Router() *chi.Mux {
 	svc := NewService(repo)
 	hndlr := NewHandler(svc)
 
-	r.Use(auth.AuthMiddleware)
-	r.Post("/add", hndlr.add)
-	r.Delete("/delete", hndlr.delete)
-	r.Put("/update", hndlr.update)
-	r.Get("/get", hndlr.get)
-	r.Get("/list", hndlr.list)
+	//r.Use(auth.AuthMiddleware)
+
+	//r.Put("/{id}", hndlr.update)
+	r.Get("/{id}", hndlr.get)
+	r.Get("/", hndlr.list)
+	r.Post("/search", hndlr.search)
+	//r.Post("/search2", hndlr.search2)
+	r.Group(func(r chi.Router) {
+		r.Use(auth.AuthMiddleware)
+		r.Post("/", hndlr.save)
+		r.Delete("/{id}", hndlr.delete)
+	})
 
 	return r
 }

@@ -2,6 +2,8 @@ package users
 
 import (
 	"Food/auth"
+	"Food/pkg/mealplan"
+	"Food/pkg/user_preference"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 )
@@ -29,10 +31,16 @@ func (rs *Resource) Router() *chi.Mux {
 
 	r.Group(func(r chi.Router) {
 		r.Use(auth.AuthMiddleware)
-		r.Get("/{id}", hndlr.get)
+
 		r.Get("/", hndlr.list)
-		r.Delete("/{id}", hndlr.delete)
-		r.Put("/{id}", hndlr.update)
+		r.Route("/{id}", func(r chi.Router) {
+			r.Get("/", hndlr.get)
+			r.Mount("/preferences", user_preference.NewResource(rs.db).Router())
+			r.Mount("/meal-plans", mealplan.NewResource(rs.db).Router())
+			r.Delete("/", hndlr.delete)
+			r.Put("/", hndlr.update)
+		})
+
 	})
 
 	return r

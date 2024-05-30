@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"net/http"
@@ -30,6 +31,14 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		// add the user_id to the context
+		claims := token.Claims.(jwt.MapClaims)
+		r = r.WithContext(setUserIDInContext(r.Context(), claims["user_id"].(string)))
+
 		next.ServeHTTP(w, r)
 	})
+}
+
+func setUserIDInContext(ctx context.Context, userID string) context.Context {
+	return context.WithValue(ctx, "user_id", userID)
 }

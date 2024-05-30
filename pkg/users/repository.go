@@ -43,7 +43,7 @@ func (r Repository) save(ctx context.Context, data AddRequest) (*User, error) {
 		return nil, errors.Wrap(err, "db.GetContext failed")
 	}
 
-	rows, err := r.db.NamedQueryContext(ctx, `INSERT INTO users (name, email, password) VALUES (:name, :email, :password) RETURNING *`, data)
+	rows, err := r.db.NamedQueryContext(ctx, `INSERT INTO users ( username, email, password_hash) VALUES (:username, :email, :password_hash) RETURNING *`, data)
 	if err != nil {
 		return nil, errors.Wrap(err, "Db.NamedQueryContext")
 	}
@@ -94,7 +94,7 @@ func (r Repository) update(ctx context.Context, id string, data UpdateRequest) (
 		return "", errors.Wrap(err, "db.GetContext failed")
 	}
 
-	res, err := r.db.ExecContext(ctx, `UPDATE users SET name = $1, email = $2 WHERE id = $3`, data.Name, data.Email, id)
+	res, err := r.db.ExecContext(ctx, `UPDATE users SET username = $1, email = $2 WHERE id = $3`, data.Name, data.Email, id)
 	if err != nil {
 		return "", errors.Wrap(err, "ExecContext")
 	}

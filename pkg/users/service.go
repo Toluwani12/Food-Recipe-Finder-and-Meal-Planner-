@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
+	"net/http"
 	"time"
 )
 
@@ -46,7 +47,7 @@ func (s Service) save(ctx context.Context, request AddRequest) (*User, error) {
 			log.WithFields(log.Fields{"service": "users/bcrypt.GenerateFromPassword", "repo": "users/bcrypt.GenerateFromPassword"}).WithError(err))
 	}
 
-	request.Password = string(hashedPassword)
+	request.PasswordHash = string(hashedPassword)
 
 	save, err := s.repo.save(ctx, request)
 	if err != nil {
@@ -79,12 +80,12 @@ func (s Service) login(ctx context.Context, request LoginRequest) (*User, string
 	}
 
 	if user == nil {
-		return nil, "", errors.New("users not exit, please sign up!")
+		return nil, "", liberror.New("users not exit, please sign up!", http.StatusBadRequest)
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(request.Password))
 	if err != nil {
-		return nil, "", errors.New("invalid password")
+		return nil, "", liberror.New("invalid password", http.StatusBadRequest)
 	}
 
 	// Create a new JWT token for the authenticated users

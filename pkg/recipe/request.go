@@ -1,30 +1,42 @@
 package recipe
 
 import (
-	"fmt"
-	"github.com/gobuffalo/validate"
-	"github.com/gobuffalo/validate/validators"
+	"Food/pkg/ingredient"
+	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"net/http"
-	"strings"
 )
 
-type AddRequest struct {
-	Id           string `json:"id"`
-	Name         string `json:"name"`
-	CookingTime  string `json:"cooking_time"`
-	Instructions string `json:"instructions"`
+type RequestData struct {
+	ID           uuid.UUID            `db:"id"`
+	Name         string               `json:"name" db:"name"`
+	Description  string               `json:"description" db:"description"`
+	CookingTime  string               `json:"cooking_time" db:"cooking_time"`
+	Instructions pq.StringArray       `json:"instructions" db:"instructions"`
+	ImgUrl       string               `json:"img_url" db:"img_url"`
+	Ingredients  []ingredient.Request `json:"ingredients" db:"ingredients"`
+	Diff         int                  `json:"diff" db:"diff"`
 }
 
-func (v *AddRequest) Bind(r *http.Request) error {
+type Request []RequestData
 
-	err1 := validate.Validate(
-		&validators.StringIsPresent{Name: "name", Field: v.Name, Message: fmt.Sprintf("%s is missing", "name")},
-	)
+func (v *Request) Bind(r *http.Request) error {
 
-	v.Name = strings.TrimSpace(strings.ToLower(v.Name))
-	if err1.HasAny() {
-		return err1
-	}
+	//err1 := validate.Validate(
+	//	&validators.StringIsPresent{Name: "name", Field: v.Name, Message: fmt.Sprintf("%s is missing", "name")},
+	//)
+	//
+	//v.Name = strings.TrimSpace(strings.ToLower(v.Name))
+	//if err1.HasAny() {
+	//	return err1
+	//}
 
 	return nil
+}
+
+type ListResponse struct {
+	ID          uuid.UUID `db:"id"`
+	Name        string    `json:"name" db:"name"`
+	ImgUrl      string    `json:"img_url" db:"img_url"`
+	Description string    `json:"description" db:"description"`
 }

@@ -1,4 +1,4 @@
-package mealplan
+package user_preference
 
 import (
 	"Food/auth"
@@ -25,11 +25,10 @@ func (rs *Resource) Router() *chi.Mux {
 	hndlr := NewHandler(svc)
 
 	r.Use(auth.AuthMiddleware)
-
-	//r.Post("/meal-plans", hndlr.save)
-	//r.Get("/meal-plans", hndlr.get)
-	r.Post("/generate", hndlr.generate)
-	r.Get("/", hndlr.GetMealPlansForDay)
+	r.Post("/", hndlr.add)
+	r.Delete("/", hndlr.delete)
+	r.Put("/", hndlr.update)
+	r.Get("/", hndlr.get)
 
 	return r
 }
