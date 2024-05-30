@@ -18,3 +18,10 @@ type Recipe struct {
 }
 
 type Recipes = []Recipe
+
+type Feedback struct {
+	UserID    string    `json:"user_id" db:"user_id"`
+	RecipeID  string    `json:"recipe_id" db:"recipe_id"`
+	Like      bool      `json:"like" db:"like"`
+	Timestamp time.Time `json:"timestamp" db:"timestamp"`
+}

@@ -71,14 +71,14 @@ func (s Service) list(ctx context.Context) ([]ListResponse, error) {
 }
 
 func (s Service) search(ctx context.Context, ingredients []string, queryParams url.Values) (interface{}, *pkg.Pagination, error) {
-	recipes, pg, err := s.repo.search2(ctx, ingredients, queryParams)
+	recipes, pg, err := s.repo.search(ctx, ingredients, queryParams)
 	return recipes, pg, liberror.CoverErr(err,
 		errors.New("service temporarily unavailable. Please try again later"),
 		log.WithFields(log.Fields{"service": "recipes/findRecipes", "repo": "recipes/findRecipes"}).WithError(err))
 }
 
 //func (s Service) search2(ctx context.Context, ingredients []string, queryParams url.Values) (interface{}, *pkg.Pagination, error) {
-//	recipes, pg, err := s.repo.search2(ctx, ingredients, queryParams)
+//	recipes, pg, err := s.repo.Search(ctx, ingredients, queryParams)
 //	return recipes, pg, liberror.CoverErr(err,
 //		errors.New("service temporarily unavailable. Please try again later"),
 //		log.WithFields(log.Fields{"service": "recipes/findRecipes", "repo": "recipes/findRecipes"}).WithError(err))

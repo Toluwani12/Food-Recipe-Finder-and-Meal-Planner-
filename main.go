@@ -22,7 +22,7 @@ func main() {
 		// Adjust settings based on your needs
 		AllowedOrigins:   []string{"*"}, // or use `*` for allowing any origin
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		AllowedHeaders:   []string{"*"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
 		MaxAge:           300, // Maximum value not to need preflight request
@@ -55,8 +55,8 @@ func main() {
 
 	r.Mount("/users", users.NewResource(db).Router())
 
-	log.Println("Server starting on port 8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	log.Println("Server starting on port 8085")
+	if err := http.ListenAndServe(":8085", r); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }

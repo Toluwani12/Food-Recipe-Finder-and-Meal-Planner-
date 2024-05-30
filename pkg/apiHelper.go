@@ -76,3 +76,24 @@ func ParsePaginationParams(query url.Values) (int, int, error) {
 
 	return page, pageSize, nil
 }
+
+// ParseParams parses pagination parameters from URL query
+func ParseParams(query url.Values) (int, int, error) {
+	page, err := strconv.Atoi(query.Get("page"))
+	if err != nil || page <= 0 {
+		page = 1
+	}
+
+	pageSize, err := strconv.Atoi(query.Get("page_size"))
+	if err != nil || pageSize <= 0 {
+		pageSize = 10
+	}
+
+	return page, pageSize, nil
+}
+
+// ApplyToQuery applies pagination to a SQL query
+func ApplyToQuery(query string, page, pageSize int) string {
+	offset := (page - 1) * pageSize
+	return fmt.Sprintf("%s LIMIT %d OFFSET %d", query, pageSize, offset)
+}

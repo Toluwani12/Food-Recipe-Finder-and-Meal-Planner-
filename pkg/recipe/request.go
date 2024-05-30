@@ -3,6 +3,7 @@ package recipe
 import (
 	"Food/pkg/ingredient"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"net/http"
 )
 
@@ -11,7 +12,7 @@ type RequestData struct {
 	Name         string               `json:"name" db:"name"`
 	Description  string               `json:"description" db:"description"`
 	CookingTime  string               `json:"cooking_time" db:"cooking_time"`
-	Instructions string               `json:"instructions" db:"instructions"`
+	Instructions pq.StringArray       `json:"instructions" db:"instructions"`
 	ImgUrl       string               `json:"img_url" db:"img_url"`
 	Ingredients  []ingredient.Request `json:"ingredients" db:"ingredients"`
 	Diff         int                  `json:"diff" db:"diff"`

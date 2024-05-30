@@ -1,6 +1,7 @@
 package mealplan
 
 import (
+	"Food/auth"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 )
@@ -23,9 +24,12 @@ func (rs *Resource) Router() *chi.Mux {
 	svc := NewService(repo)
 	hndlr := NewHandler(svc)
 
+	r.Use(auth.AuthMiddleware)
+
 	//r.Post("/meal-plans", hndlr.save)
 	//r.Get("/meal-plans", hndlr.get)
-	r.Post("/generate-meal-plans", hndlr.generate)
+	r.Post("/generate", hndlr.generate)
+	r.Get("/", hndlr.GetMealPlansForDay)
 
 	return r
 }

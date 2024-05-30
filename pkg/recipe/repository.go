@@ -3,7 +3,6 @@ package recipe
 import (
 	liberror "Food/internal/errors"
 	"Food/pkg"
-	"Food/pkg/ingredient"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -13,8 +12,6 @@ import (
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
 	"net/url"
-	"sort"
-	"strconv"
 	"strings"
 )
 
@@ -137,7 +134,7 @@ func (r Repository) bulkUpsertRecipes(ctx context.Context, tx *sqlx.Tx, recipes 
 	for _, recipe := range recipes {
 		if _, exists := existingRecipes[recipe.Name]; !exists {
 			insertValues = append(insertValues, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d)", index, index+1, index+2, index+3, index+4, index+5))
-			insertArgs = append(insertArgs, recipe.ID, recipe.Name, recipe.Description, recipe.ImgUrl, recipe.CookingTime, recipe.Instructions)
+			insertArgs = append(insertArgs, recipe.ID, recipe.Name, recipe.Description, recipe.ImgUrl, recipe.CookingTime, pq.Array(recipe.Instructions))
 			index += 6
 		}
 	}
@@ -337,258 +334,6 @@ func (r Repository) update(ctx context.Context, data Recipe) (*Recipe, error) {
 	return &data, errors.Wrap(err, "Db.NamedExecContext")
 }
 
-func (r Repository) search(ctx context.Context, ingredients []string, queryParams url.Values) (Request, *pkg.Pagination, error) {
-	page, pageSize, err := pkg.ParsePaginationParams(queryParams)
-	if err != nil {
-		return nil, nil, fmt.Errorf("parsing pagination parameters: %w", err)
-	}
-
-	if len(ingredients) == 0 {
-		// No ingredients provided, return all recipes
-		return r.findAllRecipes(ctx, page, pageSize)
-	}
-
-	recipes, pagination, err := r.findMatches(ctx, ingredients, page, pageSize)
-	if err != nil {
-		return nil, nil, fmt.Errorf("searching for matches: %w", err)
-	}
-
-	return recipes, pagination, nil
-}
-
-func (r Repository) findAllRecipes(ctx context.Context, page, pageSize int) (Request, *pkg.Pagination, error) {
-	query := `
-	   SELECT r.id, r.name, r.description, r.cooking_time, r.instructions, r.img_url,
-	          ri.ingredient_id, i.name as ingredient_name, ri.quantity, a.name as alternative_name
-	   FROM recipes r
-	   JOIN recipe_ingredients ri ON r.id = ri.recipe_id
-	   JOIN ingredients i ON i.id = ri.ingredient_id
-	   LEFT JOIN ingredient_alternatives ia ON ia.ingredient_id = i.id
-	   LEFT JOIN ingredients a ON ia.alternative_id = a.id
-	   ORDER BY r.id
-	   LIMIT $1 OFFSET $2;
-	`
-
-	offset := (page - 1) * pageSize
-	rows, err := r.db.QueryxContext(ctx, query, pageSize, offset)
-	if err != nil {
-		return nil, nil, fmt.Errorf("executing find all recipes query: %w", err)
-	}
-	defer rows.Close()
-
-	var recipes Request
-
-	// Function to find a recipe by ID in the slice
-	findRecipe := func(recipes Request, id string) (int, bool) {
-		for i, r := range recipes {
-			if r.ID.String() == id {
-				return i, true
-			}
-		}
-		return -1, false
-	}
-
-	// Process rows from the query
-	for rows.Next() {
-		var r RequestData
-		var i ingredient.Request
-		var alternativeName sql.NullString
-		err = rows.Scan(&r.ID, &r.Name, &r.Description, &r.CookingTime, &r.Instructions, &r.ImgUrl, &i.ID, &i.Name, &i.Quantity, &alternativeName)
-		if err != nil {
-			return nil, nil, fmt.Errorf("scanning rows: %w", err)
-		}
-
-		index, found := findRecipe(recipes, r.ID.String())
-		if !found {
-			r.Ingredients = []ingredient.Request{}
-			recipes = append(recipes, r)
-			index = len(recipes) - 1
-		}
-
-		if alternativeName.Valid {
-			i.Alternatives = append(i.Alternatives, alternativeName.String)
-		}
-		recipes[index].Ingredients = append(recipes[index].Ingredients, i)
-	}
-
-	totalItemsQuery := "SELECT COUNT(*) FROM recipes"
-	var totalItems int
-	if err := r.db.GetContext(ctx, &totalItems, totalItemsQuery); err != nil {
-		return nil, nil, fmt.Errorf("counting total items: %w", err)
-	}
-
-	pagination := pkg.NewPagination(page, pageSize, totalItems)
-	return recipes, pagination, nil
-}
-
-func (r Repository) findMatches(ctx context.Context, ingredients []string, page, pageSize int) (Request, *pkg.Pagination, error) {
-	exactQuery := `
-	   SELECT r.id, r.name, r.description, r.cooking_time, r.instructions, r.img_url,
-	          ri.ingredient_id, i.name as ingredient_name, ri.quantity, a.name as alternative_name
-	   FROM recipes r
-	   JOIN recipe_ingredients ri ON r.id = ri.recipe_id
-	   JOIN ingredients i ON i.id = ri.ingredient_id
-	   LEFT JOIN ingredient_alternatives ia ON ia.ingredient_id = i.id
-	   LEFT JOIN ingredients a ON ia.alternative_id = a.id
-	   WHERE r.id IN (
-	       SELECT recipe_id
-	       FROM recipe_ingredients ri
-	       JOIN ingredients i ON i.id = ri.ingredient_id
-	       GROUP BY recipe_id
-	       HAVING ARRAY_AGG(i.name ORDER BY i.name) @> $1::text[]
-	          AND COUNT(i.name) = $2
-	   )
-	   ORDER BY r.id
-	   LIMIT $3 OFFSET $4;
-	`
-
-	closestMatchQuery := `
-        SELECT r.id, r.name, r.description, r.cooking_time, r.instructions, r.img_url,
-               ri.ingredient_id, i.name as ingredient_name, ri.quantity, a.name as alternative_name,
-               COUNT(i.name) FILTER (WHERE i.name = ANY($1)) AS matching_ingredients
-        FROM recipes r
-        JOIN recipe_ingredients ri ON r.id = ri.recipe_id
-        JOIN ingredients i ON i.id = ri.ingredient_id
-        LEFT JOIN ingredient_alternatives ia ON ia.ingredient_id = i.id
-        LEFT JOIN ingredients a ON ia.alternative_id = a.id
-        GROUP BY r.id, ri.ingredient_id, i.name, ri.quantity, a.name
-        ORDER BY matching_ingredients DESC, r.id
-        LIMIT $2 OFFSET $3;
-    `
-
-	offset := (page - 1) * pageSize
-
-	var rows *sqlx.Rows
-	var err error
-
-	// Try exact match first
-	rows, err = r.db.QueryxContext(ctx, exactQuery, pq.Array(ingredients), len(ingredients), pageSize, offset)
-	if err != nil {
-		return nil, nil, fmt.Errorf("executing exact match query: %w", err)
-	}
-	defer rows.Close()
-
-	var recipes Request
-
-	// Function to find a recipe by ID in the slice
-	findRecipe := func(recipes Request, id string) (int, bool) {
-		for i, r := range recipes {
-			if r.ID.String() == id {
-				return i, true
-			}
-		}
-		return -1, false
-	}
-
-	// Process rows from exact match query
-	for rows.Next() {
-		var r RequestData
-		var i ingredient.Request
-		var alternativeName sql.NullString
-		err = rows.Scan(&r.ID, &r.Name, &r.Description, &r.CookingTime, &r.Instructions, &r.ImgUrl, &i.ID, &i.Name, &i.Quantity, &alternativeName)
-		if err != nil {
-			return nil, nil, fmt.Errorf("scanning rows: %w", err)
-		}
-
-		index, found := findRecipe(recipes, r.ID.String())
-		if !found {
-			r.Ingredients = []ingredient.Request{}
-			recipes = append(recipes, r)
-			index = len(recipes) - 1
-		}
-
-		if alternativeName.Valid {
-			i.Alternatives = append(i.Alternatives, alternativeName.String)
-		}
-		recipes[index].Ingredients = append(recipes[index].Ingredients, i)
-	}
-
-	if len(recipes) > 0 {
-		totalItemsQuery := `
-		   SELECT COUNT(*) FROM (
-		       SELECT r.id
-		       FROM recipes r
-		       JOIN recipe_ingredients ri ON r.id = ri.recipe_id
-		       JOIN ingredients i ON i.id = ri.ingredient_id
-		       WHERE r.id IN (
-		           SELECT recipe_id
-		           FROM recipe_ingredients ri
-		           JOIN ingredients i ON i.id = ri.ingredient_id
-		           GROUP BY recipe_id
-		           HAVING ARRAY_AGG(i.name ORDER BY i.name) @> $1::text[]
-		              AND COUNT(i.name) = $2
-		       )
-		   ) AS total
-		`
-		var totalItems int
-		if err := r.db.GetContext(ctx, &totalItems, totalItemsQuery, pq.Array(ingredients), len(ingredients)); err != nil {
-			return nil, nil, fmt.Errorf("counting total items: %w", err)
-		}
-
-		pagination := pkg.NewPagination(page, pageSize, totalItems)
-		return recipes, pagination, nil
-	}
-
-	// If no exact matches are found, find the closest match
-	rows, err = r.db.QueryxContext(ctx, closestMatchQuery, pq.Array(ingredients), pageSize, offset)
-	if err != nil {
-		return nil, nil, fmt.Errorf("executing closest match query: %w", err)
-	}
-	defer rows.Close()
-
-	// Process rows from closest match query
-	for rows.Next() {
-		var r RequestData
-		var i ingredient.Request
-		var alternativeName sql.NullString
-		var matchingIngredients int
-		err = rows.Scan(&r.ID, &r.Name, &r.Description, &r.CookingTime, &r.Instructions, &r.ImgUrl, &i.ID, &i.Name, &i.Quantity, &alternativeName, &matchingIngredients)
-		if err != nil {
-			return nil, nil, fmt.Errorf("scanning rows: %w", err)
-		}
-
-		index, found := findRecipe(recipes, r.ID.String())
-		if !found {
-			r.Ingredients = []ingredient.Request{}
-			recipes = append(recipes, r)
-			index = len(recipes) - 1
-		}
-
-		if alternativeName.Valid {
-			i.Alternatives = append(i.Alternatives, alternativeName.String)
-		}
-		recipes[index].Ingredients = append(recipes[index].Ingredients, i)
-		recipes[index].Diff = matchingIngredients
-	}
-
-	// Sort recipes based on the number of matching ingredients in descending order
-	sort.SliceStable(recipes, func(i, j int) bool {
-		return recipes[i].Diff > recipes[j].Diff
-	})
-
-	totalItemsQuery := `
-	   SELECT COUNT(*) FROM (
-	       SELECT r.id
-	       FROM recipes r
-	       JOIN recipe_ingredients ri ON r.id = ri.recipe_id
-	       JOIN ingredients i ON i.id = ri.ingredient_id
-	       WHERE r.id IN (
-	           SELECT recipe_id
-	           FROM recipe_ingredients ri
-	           JOIN ingredients i ON i.id = ri.ingredient_id
-	           GROUP BY recipe_id
-	       )
-	   ) AS total
-	`
-	var totalItems int
-	if err := r.db.GetContext(ctx, &totalItems, totalItemsQuery, pq.Array(ingredients)); err != nil {
-		return nil, nil, fmt.Errorf("counting total items: %w", err)
-	}
-
-	pagination := pkg.NewPagination(page, pageSize, totalItems)
-	return recipes, pagination, nil
-}
-
 type Ingredient struct {
 	Name         string   `json:"name"`
 	Quantity     string   `json:"quantity"`
@@ -605,110 +350,141 @@ func (i *Ingredients) Scan(value interface{}) error {
 	return json.Unmarshal(bytes, i)
 }
 
-type RequestData3 struct {
-	ID           uuid.UUID   `db:"id"`
-	Name         string      `json:"name" db:"name"`
-	Description  string      `json:"description" db:"description"`
-	CookingTime  string      `json:"cooking_time" db:"cooking_time"`
-	Instructions []string    `json:"instructions" db:"instructions"`
-	ImgUrl       string      `json:"img_url" db:"img_url"`
-	Ingredients  Ingredients `json:"ingredients" db:"-"`
+type ResponseData struct {
+	ID           uuid.UUID      `db:"id"`
+	Name         string         `json:"name" db:"name"`
+	Description  string         `json:"description" db:"description"`
+	CookingTime  string         `json:"cooking_time" db:"cooking_time"`
+	Instructions pq.StringArray `json:"instructions" db:"instructions"`
+	ImgUrl       string         `json:"img_url" db:"img_url"`
+	Ingredients  Ingredients    `json:"ingredients" db:"-"`
 }
 
-func (r Repository) search2(ctx context.Context, ingredients []string, queryParams url.Values) ([]RequestData3, *pkg.Pagination, error) {
-	if len(ingredients) == 0 {
-		return r.findAllRecipes2(ctx, queryParams)
+func (r *Repository) search(ctx context.Context, ingredients []string, queryParams url.Values) ([]ResponseData, *pkg.Pagination, error) {
+	if len(ingredients) == 0 || strings.TrimSpace(ingredients[0]) == "" {
+		return r.findAllRecipes(ctx, queryParams)
 	}
 
-	exactMatches, exactMatchPagination, err := r.findExactMatch(ctx, ingredients, queryParams)
+	matches, pagination, err := r.findMatches(ctx, ingredients, queryParams, true)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if len(exactMatches) > 0 {
-		return r.getIngredientsForRecipes(ctx, exactMatches, exactMatchPagination)
+	if len(matches) > 0 {
+		return r.getIngredientsForRecipes(ctx, matches, pagination)
 	}
 
-	closestMatches, closestMatchPagination, err := r.findClosestMatches(ctx, ingredients, queryParams)
+	return r.findMatches(ctx, ingredients, queryParams, false)
+}
+
+func (r *Repository) findAllRecipes(ctx context.Context, queryParams url.Values) ([]ResponseData, *pkg.Pagination, error) {
+	page, pageSize, err := pkg.ParsePaginationParams(queryParams)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return r.getIngredientsForRecipes(ctx, closestMatches, closestMatchPagination)
-}
+	var totalItems int
+	countQuery := `SELECT COUNT(*) FROM recipes`
+	err = r.db.GetContext(ctx, &totalItems, countQuery)
+	if err != nil {
+		return nil, nil, err
+	}
 
-func (r Repository) findAllRecipes2(ctx context.Context, queryParams url.Values) ([]RequestData3, *pkg.Pagination, error) {
-	page, pageSize := getPagination(queryParams)
-
-	var recipes []RequestData3
+	var recipes []ResponseData
 	query := `
-	SELECT r.id, r.name, r.description, r.cooking_time, r.instructions, r.img_url
-	FROM recipes r
-	ORDER BY r.name
-	LIMIT $1 OFFSET $2`
-	err := r.db.SelectContext(ctx, &recipes, query, pageSize, (page-1)*pageSize)
+		SELECT id, name, description, cooking_time, instructions, img_url
+		FROM recipes
+		ORDER BY name`
+	query = pkg.ApplyToQuery(query, page, pageSize)
+	err = r.db.SelectContext(ctx, &recipes, query)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return r.getIngredientsForRecipes(ctx, recipes, &pkg.Pagination{Page: page, PageSize: pageSize})
+	pagination := pkg.NewPagination(page, pageSize, totalItems)
+	return recipes, pagination, nil
 }
 
-func (r Repository) findExactMatch(ctx context.Context, ingredients []string, queryParams url.Values) ([]RequestData3, *pkg.Pagination, error) {
-	page, pageSize := getPagination(queryParams)
+func (r *Repository) findMatches(ctx context.Context, ingredients []string, queryParams url.Values, exactMatch bool) ([]ResponseData, *pkg.Pagination, error) {
+	page, pageSize, err := pkg.ParsePaginationParams(queryParams)
+	if err != nil {
+		return nil, nil, err
+	}
 
-	var recipes []RequestData3
 	ingredientList := strings.Join(ingredients, "|")
-	query := `
-	SELECT r.id, r.name, r.description, r.cooking_time, r.instructions, r.img_url
-	FROM recipes r
-	JOIN recipe_ingredients ri ON r.id = ri.recipe_id
-	JOIN ingredients i ON ri.ingredient_id = i.id
-	WHERE i.name ~* $1
-	GROUP BY r.id
-	HAVING COUNT(DISTINCT i.name) = $2
-	ORDER BY r.name
-	LIMIT $3 OFFSET $4`
-	err := r.db.SelectContext(ctx, &recipes, query, ingredientList, len(ingredients), pageSize, (page-1)*pageSize)
+	matchCondition := "COUNT(DISTINCT i.name) = $2"
+	orderCondition := "ORDER BY name"
+
+	if !exactMatch {
+		matchCondition = "ABS(COUNT(DISTINCT i.name) - $2) = 0"
+		orderCondition = "ORDER BY " + matchCondition + " ASC"
+	}
+
+	countQuery := fmt.Sprintf(`
+		SELECT COUNT(DISTINCT r.id)
+		FROM recipes r
+		JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+		JOIN ingredients i ON ri.ingredient_id = i.id
+		WHERE i.name ~* $1
+		GROUP BY r.id
+		HAVING %s`, matchCondition)
+
+	var totalItems int
+	err = r.db.GetContext(ctx, &totalItems, countQuery, ingredientList, len(ingredients))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return recipes, &pkg.Pagination{Page: page, PageSize: pageSize}, nil
-}
-
-func (r Repository) findClosestMatches(ctx context.Context, ingredients []string, queryParams url.Values) ([]RequestData3, *pkg.Pagination, error) {
-	page, pageSize := getPagination(queryParams)
-
-	var recipes []RequestData3
-	ingredientList := strings.Join(ingredients, "|")
-	query := `
-	SELECT r.id, r.name, r.description, r.cooking_time, r.instructions, r.img_url
-	FROM recipes r
-	JOIN recipe_ingredients ri ON r.id = ri.recipe_id
-	JOIN ingredients i ON ri.ingredient_id = i.id
-	WHERE i.name ~* $1
-	GROUP BY r.id
-	ORDER BY ABS(COUNT(DISTINCT i.name) - $2) ASC
-	LIMIT $3 OFFSET $4`
-	err := r.db.SelectContext(ctx, &recipes, query, ingredientList, len(ingredients), pageSize, (page-1)*pageSize)
+	var recipes []ResponseData
+	query := fmt.Sprintf(`
+		SELECT r.id, r.name, r.description, r.cooking_time, r.instructions, r.img_url
+		FROM recipes r
+		JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+		JOIN ingredients i ON ri.ingredient_id = i.id
+		WHERE i.name ~* $1
+		GROUP BY r.id
+		HAVING %s
+		%s
+		LIMIT $3 OFFSET $4`, matchCondition, orderCondition)
+	err = r.db.SelectContext(ctx, &recipes, query, ingredientList, len(ingredients), pageSize, (page-1)*pageSize)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return recipes, &pkg.Pagination{Page: page, PageSize: pageSize}, nil
+	pagination := pkg.NewPagination(page, pageSize, totalItems)
+	return recipes, pagination, nil
 }
 
-func (r Repository) getIngredientsForRecipes(ctx context.Context, recipes []RequestData3, pagination *pkg.Pagination) ([]RequestData3, *pkg.Pagination, error) {
+func (r *Repository) getIngredientsForRecipes(ctx context.Context, recipes []ResponseData, pagination *pkg.Pagination) ([]ResponseData, *pkg.Pagination, error) {
 	if len(recipes) == 0 {
 		return recipes, pagination, nil
 	}
 
-	var recipeIDs []uuid.UUID
-	for _, recipe := range recipes {
-		recipeIDs = append(recipeIDs, recipe.ID)
+	recipeIDs := extractRecipeIDs(recipes)
+
+	ingredientsData, err := r.fetchIngredients(ctx, recipeIDs)
+	if err != nil {
+		return nil, nil, err
 	}
 
+	mapIngredientsToRecipes(recipes, ingredientsData)
+
+	return recipes, pagination, nil
+}
+
+func extractRecipeIDs(recipes []ResponseData) []uuid.UUID {
+	recipeIDs := make([]uuid.UUID, len(recipes))
+	for i, recipe := range recipes {
+		recipeIDs[i] = recipe.ID
+	}
+	return recipeIDs
+}
+
+func (r *Repository) fetchIngredients(ctx context.Context, recipeIDs []uuid.UUID) ([]struct {
+	RecipeID   uuid.UUID `db:"recipe_id"`
+	Ingredient string    `db:"ingredient"`
+	Quantity   string    `db:"quantity"`
+}, error) {
 	var ingredientsData []struct {
 		RecipeID   uuid.UUID `db:"recipe_id"`
 		Ingredient string    `db:"ingredient"`
@@ -716,20 +492,24 @@ func (r Repository) getIngredientsForRecipes(ctx context.Context, recipes []Requ
 	}
 
 	query := `
-	SELECT ri.recipe_id, i.name AS ingredient, ri.quantity
-	FROM recipe_ingredients ri
-	JOIN ingredients i ON ri.ingredient_id = i.id
-	WHERE ri.recipe_id = ANY($1)`
+		SELECT ri.recipe_id, i.name AS ingredient, ri.quantity
+		FROM recipe_ingredients ri
+		JOIN ingredients i ON ri.ingredient_id = i.id
+		WHERE ri.recipe_id = ANY($1)`
 	err := r.db.SelectContext(ctx, &ingredientsData, query, pq.Array(recipeIDs))
-	if err != nil {
-		return nil, nil, err
-	}
+	return ingredientsData, err
+}
 
+func mapIngredientsToRecipes(recipes []ResponseData, ingredientsData []struct {
+	RecipeID   uuid.UUID `db:"recipe_id"`
+	Ingredient string    `db:"ingredient"`
+	Quantity   string    `db:"quantity"`
+}) {
 	ingredientsMap := make(map[uuid.UUID]Ingredients)
-	for _, ingredientData := range ingredientsData {
-		ingredientsMap[ingredientData.RecipeID] = append(ingredientsMap[ingredientData.RecipeID], Ingredient{
-			Name:     ingredientData.Ingredient,
-			Quantity: ingredientData.Quantity,
+	for _, data := range ingredientsData {
+		ingredientsMap[data.RecipeID] = append(ingredientsMap[data.RecipeID], Ingredient{
+			Name:     data.Ingredient,
+			Quantity: data.Quantity,
 		})
 	}
 
@@ -738,26 +518,4 @@ func (r Repository) getIngredientsForRecipes(ctx context.Context, recipes []Requ
 			recipes[i].Ingredients = ingredients
 		}
 	}
-
-	return recipes, pagination, nil
-}
-
-func getPagination(queryParams url.Values) (int, int) {
-	page := 1
-	pageSize := 10
-
-	if p, ok := queryParams["page"]; ok && len(p) > 0 {
-		page = atoi(p[0])
-	}
-
-	if ps, ok := queryParams["pageSize"]; ok && len(ps) > 0 {
-		pageSize = atoi(ps[0])
-	}
-
-	return page, pageSize
-}
-
-func atoi(str string) int {
-	i, _ := strconv.Atoi(str)
-	return i
 }

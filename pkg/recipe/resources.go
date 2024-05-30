@@ -30,6 +30,7 @@ func (rs *Resource) Router() *chi.Mux {
 	r.Get("/{id}", hndlr.get)
 	r.Get("/", hndlr.list)
 	r.Post("/search", hndlr.search)
+	//r.Post("/search2", hndlr.search2)
 	r.Group(func(r chi.Router) {
 		r.Use(auth.AuthMiddleware)
 		r.Post("/", hndlr.save)
