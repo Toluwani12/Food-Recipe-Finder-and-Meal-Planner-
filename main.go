@@ -31,7 +31,7 @@ func main() {
 	// Use the CORS middleware
 	r.Use(cors.Handler)
 
-	db, err := sqlx.Open("postgres", "postgres://olusolaalao:postgres@localhost:5432/recipe?sslmode=disable")
+	db, err := sqlx.Open("postgres", "postgres://recipe_q9i7_user:HcRB9IqNE49we2aN93XGp7z5RPdZY0rq@dpg-cpcf6t3tg9os738ccrjg-a.frankfurt-postgres.render.com:5432/recipe_q9i7?sslmode=require")
 	if err != nil {
 		log.Fatal(err)
 	}
