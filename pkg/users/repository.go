@@ -31,32 +31,54 @@ func (r Repository) get(ctx context.Context, id string) (*User, error) {
 	return &user, errors.Wrap(err, "db.GetContext failed")
 }
 
-func (r Repository) save(ctx context.Context, data AddRequest) (*User, error) {
+func (r *Repository) save(ctx context.Context, data AddRequest) (*User, error) {
 	var user User
-	err := r.db.GetContext(ctx, &user, "SELECT * FROM users WHERE email = $1", data.Email)
 
+	// Start a transaction
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "tx.BeginTxx failed")
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	// Check if the user already exists
+	err = tx.GetContext(ctx, &user, "SELECT * FROM users WHERE email = $1", data.Email)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, errors.Wrap(err, "tx.GetContext failed")
+	}
 	if user != (User{}) {
 		return nil, liberror.ErrEmailExists
 	}
 
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, errors.Wrap(err, "db.GetContext failed")
-	}
-
-	rows, err := r.db.NamedQueryContext(ctx, `INSERT INTO users ( username, email, password_hash) VALUES (:username, :email, :password_hash) RETURNING *`, data)
+	// Insert the new user
+	err = tx.QueryRowxContext(ctx, `
+		INSERT INTO users (username, email, password_hash)
+		VALUES ($1, $2, $3)
+		RETURNING id`, data.Username, data.Email, data.PasswordHash).Scan(&user.ID)
 	if err != nil {
-		return nil, errors.Wrap(err, "Db.NamedQueryContext")
+		return nil, errors.Wrap(err, "tx.QueryRowxContext failed")
 	}
 
-	if rows.Next() {
-		if err := rows.StructScan(&user); err != nil {
-			return nil, errors.Wrap(err, "Rows.StructScan")
-		}
+	// Create a user_preferences entry
+	_, err = tx.ExecContext(ctx, `
+		INSERT INTO user_preferences (user_id, recipe_ids)
+		VALUES ($1, '{}')`, user.ID)
+	if err != nil {
+		return nil, errors.Wrap(err, "tx.ExecContext for user_preferences failed")
 	}
 
 	return &user, nil
 }
-
 func (r Repository) delete(ctx context.Context, id string) (string, error) {
 	_, err := r.db.ExecContext(ctx, `DELETE FROM users VALUES (:id)`, id)
 	return id, errors.Wrap(err, "ExecContext")

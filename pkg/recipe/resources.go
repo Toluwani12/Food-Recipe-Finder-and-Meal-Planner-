@@ -2,6 +2,7 @@ package recipe
 
 import (
 	"Food/auth"
+	"Food/pkg/user_preference"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 )
@@ -22,11 +23,15 @@ func (rs *Resource) Router() *chi.Mux {
 
 	repo := NewRepository(rs.db)
 	svc := NewService(repo)
-	hndlr := NewHandler(svc)
 
-	//r.Use(auth.AuthMiddleware)
+	usrPrefRepo := user_preference.NewRepository(rs.db)
+	usrPrefSvc := user_preference.NewService(usrPrefRepo)
+	hndlr := NewHandler(svc, usrPrefSvc)
+
+	r.Use(auth.AuthMiddleware)
 
 	//r.Put("/{id}", hndlr.update)
+	r.Get("/{id}/like", hndlr.like)
 	r.Get("/{id}", hndlr.get)
 	r.Get("/", hndlr.list)
 	r.Post("/search", hndlr.search)

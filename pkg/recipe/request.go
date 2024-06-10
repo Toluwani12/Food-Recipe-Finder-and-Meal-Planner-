@@ -35,8 +35,7 @@ func (v *Request) Bind(r *http.Request) error {
 }
 
 type ListResponse struct {
-	ID          uuid.UUID `db:"id"`
-	Name        string    `json:"name" db:"name"`
-	ImgUrl      string    `json:"img_url" db:"img_url"`
-	Description string    `json:"description" db:"description"`
+	ID    string `db:"id" json:"id"`
+	Name  string `db:"name" json:"name"`
+	Liked bool   `db:"liked" json:"liked"`
 }

@@ -4,25 +4,27 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3a5342c9-068d-46ec-a36d-27f3f05f0c6e" name="Changes" comment="feat: enable search capability">
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/73ba12ed-4240-4fb4-9a62-2f79a0b4e5d7.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/73ba12ed-4240-4fb4-9a62-2f79a0b4e5d7.xml" afterDir="false" />
+    <list default="true" id="3a5342c9-068d-46ec-a36d-27f3f05f0c6e" name="Changes" comment="feat: make update to preferences">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db/migrations/000001_create_recipe_table.up.sql" beforeDir="false" afterPath="$PROJECT_DIR$/db/migrations/000001_create_recipe_table.up.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db/migrations/20240422173858_creae_meal_plans_table.down.sql" beforeDir="false" afterPath="$PROJECT_DIR$/db/migrations/20240422173858_creae_meal_plans_table.down.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db/migrations/20240422173858_creae_meal_plans_table.up.sql" beforeDir="false" afterPath="$PROJECT_DIR$/db/migrations/20240422173858_creae_meal_plans_table.up.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/db/migrations/20240422174824_create_user_preferences_table.up.sql" beforeDir="false" afterPath="$PROJECT_DIR$/db/migrations/20240422174824_create_user_preferences_table.up.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/apiHelper.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/apiHelper.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/mealplan/handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/mealplan/handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/mealplan/model.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/mealplan/model.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/mealplan/repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/mealplan/repository.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/mealplan/resources.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/mealplan/resources.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/mealplan/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/mealplan/service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/recipe/model.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/recipe/model.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/recipe/handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/recipe/handler.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/recipe/repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/recipe/repository.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/recipe/request.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/recipe/request.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/recipe/resources.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/recipe/resources.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/recipe/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/recipe/service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/users/resources.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/users/resources.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/user_preference/handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/user_preference/handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/user_preference/model.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/user_preference/model.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/user_preference/repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/user_preference/repository.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/user_preference/request.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/user_preference/request.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/user_preference/resources.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/user_preference/resources.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/user_preference/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/user_preference/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/users/repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/users/repository.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -51,37 +53,40 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultGoTemplateProperty&quot;: &quot;Go File&quot;,
-    &quot;Go Build.go build Food.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.modules.automatic.dependencies.download&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;new&quot;,
-    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
-    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/olusolaalao/Downloads/Food-Recipe-Finder-and-Meal-Planner- 2/pkg/user_preference&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultGoTemplateProperty": "Go File",
+    "Go Build.go build Food.executor": "Run",
+    "Makefile Target.migration.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.go.formatter.settings.were.checked": "true",
+    "RunOnceActivity.go.migrated.go.modules.settings": "true",
+    "RunOnceActivity.go.modules.automatic.dependencies.download": "true",
+    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
+    "git-widget-placeholder": "new",
+    "go.import.settings.migrated": "true",
+    "go.sdk.automatically.set": "true",
+    "last_opened_file_path": "/Users/olusolaalao/Downloads/Food-Recipe-Finder-and-Meal-Planner- 2/pkg/likes",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;postgresql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "postgresql"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/pkg/likes" />
+      <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/pkg/user_preference" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Go Build.go build Food">
     <configuration name="go build Food" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="Food-Recipe-Finder-and-Meal-Planner- 2" />
       <working_directory value="$PROJECT_DIR$" />
@@ -91,9 +96,16 @@
       <filePath value="$PROJECT_DIR$/main.go" />
       <method v="2" />
     </configuration>
+    <configuration name="migration" type="MAKEFILE_TARGET_RUN_CONFIGURATION" factoryName="Makefile" temporary="true">
+      <makefile filename="$PROJECT_DIR$/Makefile" target="migration" workingDirectory="" arguments="">
+        <envs />
+      </makefile>
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
         <item itemvalue="Go Build.go build Food" />
+        <item itemvalue="Makefile Target.migration" />
       </list>
     </recent_temporary>
   </component>
@@ -112,7 +124,9 @@
     <MESSAGE value="feat: add implement cruds" />
     <MESSAGE value="feat: add user_preference and mealplan schemas" />
     <MESSAGE value="feat: enable search capability" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: enable search capability" />
+    <MESSAGE value="feat: add db connection string" />
+    <MESSAGE value="feat: make update to preferences" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: make update to preferences" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
@@ -122,7 +136,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/pkg/users/repository.go</url>
-          <line>92</line>
+          <line>114</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
@@ -146,28 +160,13 @@
           <option name="timeStamp" value="25" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/user_preference/repository.go</url>
-          <line>20</line>
-          <option name="timeStamp" value="33" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/pkg/users/handler.go</url>
           <line>48</line>
           <option name="timeStamp" value="34" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/user_preference/repository.go</url>
-          <line>45</line>
-          <option name="timeStamp" value="35" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/pkg/user_preference/repository.go</url>
-          <line>33</line>
-          <option name="timeStamp" value="37" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/pkg/recipe/handler.go</url>
-          <line>23</line>
+          <line>49</line>
           <option name="timeStamp" value="40" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
@@ -177,13 +176,8 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/pkg/user_preference/handler.go</url>
-          <line>22</line>
+          <line>21</line>
           <option name="timeStamp" value="43" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/auth/auth_middleware.go</url>
-          <line>15</line>
-          <option name="timeStamp" value="44" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/pkg/mealplan/handler.go</url>
@@ -192,13 +186,78 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/pkg/mealplan/service.go</url>
-          <line>106</line>
+          <line>111</line>
           <option name="timeStamp" value="46" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/pkg/mealplan/handler.go</url>
           <line>49</line>
           <option name="timeStamp" value="47" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/mealplan/service.go</url>
+          <line>142</line>
+          <option name="timeStamp" value="51" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/users/repository.go</url>
+          <line>72</line>
+          <option name="timeStamp" value="55" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/users/repository.go</url>
+          <line>37</line>
+          <option name="timeStamp" value="56" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/recipe/handler.go</url>
+          <line>161</line>
+          <option name="timeStamp" value="59" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/recipe/repository.go</url>
+          <line>382</line>
+          <option name="timeStamp" value="60" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/recipe/repository.go</url>
+          <line>401</line>
+          <option name="timeStamp" value="61" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/user_preference/handler.go</url>
+          <line>51</line>
+          <option name="timeStamp" value="62" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/recipe/repository.go</url>
+          <line>439</line>
+          <option name="timeStamp" value="63" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/user_preference/service.go</url>
+          <line>27</line>
+          <option name="timeStamp" value="64" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/user_preference/repository.go</url>
+          <line>71</line>
+          <option name="timeStamp" value="65" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/user_preference/repository.go</url>
+          <line>52</line>
+          <option name="timeStamp" value="70" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/recipe/handler.go</url>
+          <line>28</line>
+          <option name="timeStamp" value="71" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/pkg/user_preference/repository.go</url>
+          <line>92</line>
+          <option name="timeStamp" value="72" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
