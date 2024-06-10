@@ -7,12 +7,7 @@ import (
 )
 
 type AddRequest struct {
-	Vegetarian            bool            `json:"vegetarian"`
-	GlutenFree            bool            `json:"gluten_free"`
-	CuisinePreference     string          `json:"cuisine_preference"`
-	DislikedIngredients   pq.StringArray  `json:"disliked_ingredients"`
-	AdditionalPreferences json.RawMessage `json:"additional_preferences"` // JSON for flexibility
-	DietaryGoals          string          `json:"dietary_goals"`
+	RecipeIds []string `json:"recipe_ids"`
 }
 
 func (v *AddRequest) Bind(r *http.Request) error {

@@ -2,6 +2,7 @@ package recipe
 
 import (
 	"Food/pkg"
+	"Food/pkg/user_preference"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -10,13 +11,38 @@ import (
 )
 
 type Handler struct {
-	svc *Service
+	svc        *Service
+	usrPrefSvc *user_preference.Service
 }
 
-func NewHandler(svc *Service) *Handler {
+func NewHandler(svc *Service, usrPrefSvc *user_preference.Service) *Handler {
 	return &Handler{
-		svc: svc,
+		svc:        svc,
+		usrPrefSvc: usrPrefSvc,
 	}
+}
+
+func (h Handler) like(w http.ResponseWriter, r *http.Request) {
+
+	id := chi.URLParam(r, "id")
+
+	queryParams := r.URL.Query()
+	like := queryParams.Get("liked") == "true"
+
+	userID := r.Context().Value("user_id").(string)
+	req := user_preference.AddRequest{RecipeIds: []string{id}}
+
+	err := h.usrPrefSvc.Save(r.Context(), userID, req, like)
+	if err != nil {
+		pkg.Render(w, r, err)
+		return
+	}
+
+	// return a success response to users
+	pkg.Render(w, r, pkg.ApiResponse{
+		Message: "successful",
+		Code:    200,
+	})
 }
 
 // addRecipe is a HTTP handler for adding a new recipe.
@@ -110,16 +136,19 @@ func (h Handler) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handler) list(w http.ResponseWriter, r *http.Request) {
-	recipe, err := h.svc.list(r.Context())
+
+	userID := r.Context().Value("user_id").(string)
+
+	recipes, err := h.svc.list(r.Context(), userID)
 	if err != nil {
-		// If an errors occurs, send an appropriate HTTP response
+		// If an error occurs, send an appropriate HTTP response
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
 	pkg.Render(w, r, pkg.ApiResponse{
-		Data:    recipe,
-		Message: "Recipe retrieved successfully",
+		Data:    recipes,
+		Message: "Recipes retrieved successfully",
 		Code:    http.StatusOK,
 	})
 }
@@ -129,6 +158,14 @@ type SearchRequest struct {
 }
 
 func (h Handler) search(w http.ResponseWriter, r *http.Request) {
+
+	userID := r.Context().Value("user_id")
+
+	id := ""
+	if userID != nil {
+		id = userID.(string)
+	}
+
 	var req SearchRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -139,7 +176,7 @@ func (h Handler) search(w http.ResponseWriter, r *http.Request) {
 	log.Infoln("Searching for recipes with ingredients: ", req.Ingredients)
 
 	queryParams := r.URL.Query()
-	recipes, pagination, err := h.svc.search(r.Context(), req.Ingredients, queryParams)
+	recipes, pagination, err := h.svc.search(r.Context(), req.Ingredients, queryParams, id)
 	if err != nil {
 		pkg.Render(w, r, err)
 		return

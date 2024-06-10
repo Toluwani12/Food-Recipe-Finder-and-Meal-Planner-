@@ -63,15 +63,15 @@ func (s Service) get(ctx context.Context, id string) (*Recipe, error) {
 		log.WithFields(log.Fields{"service": "recipes/get", "repo": "recipes/get"}).WithError(err))
 }
 
-func (s Service) list(ctx context.Context) ([]ListResponse, error) {
-	resp, err := s.repo.list(ctx)
+func (s Service) list(ctx context.Context, userID string) ([]ListResponse, error) {
+	resp, err := s.repo.list(ctx, userID)
 	return resp, liberror.CoverErr(err,
 		errors.New("service temporarily unavailable. Please try again later"),
 		log.WithFields(log.Fields{"service": "recipes/list", "repo": "recipes/list"}).WithError(err))
 }
 
-func (s Service) search(ctx context.Context, ingredients []string, queryParams url.Values) (interface{}, *pkg.Pagination, error) {
-	recipes, pg, err := s.repo.search(ctx, ingredients, queryParams)
+func (s Service) search(ctx context.Context, ingredients []string, queryParams url.Values, userId string) (interface{}, *pkg.Pagination, error) {
+	recipes, pg, err := s.repo.search(ctx, ingredients, queryParams, userId)
 	return recipes, pg, liberror.CoverErr(err,
 		errors.New("service temporarily unavailable. Please try again later"),
 		log.WithFields(log.Fields{"service": "recipes/findRecipes", "repo": "recipes/findRecipes"}).WithError(err))

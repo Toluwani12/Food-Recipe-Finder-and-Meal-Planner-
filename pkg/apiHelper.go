@@ -2,6 +2,8 @@ package pkg
 
 import (
 	"Food/internal/errors"
+	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -97,3 +99,5 @@ func ApplyToQuery(query string, page, pageSize int) string {
 	offset := (page - 1) * pageSize
 	return fmt.Sprintf("%s LIMIT %d OFFSET %d", query, pageSize, offset)
 }
+
+type ExecContext func(ctx context.Context, query string, args ...interface{}) (sql.Result, error)

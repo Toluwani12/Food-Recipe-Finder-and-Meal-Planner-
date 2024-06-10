@@ -27,8 +27,6 @@ func (rs *Resource) Router() *chi.Mux {
 	r.Use(auth.AuthMiddleware)
 	r.Post("/", hndlr.add)
 	r.Delete("/", hndlr.delete)
-	r.Put("/", hndlr.update)
 	r.Get("/", hndlr.get)
-
 	return r
 }
