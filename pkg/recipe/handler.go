@@ -136,10 +136,13 @@ func (h Handler) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handler) list(w http.ResponseWriter, r *http.Request) {
-
+	// Extract the userID from the request, for example, from a query parameter
 	userID := r.Context().Value("user_id").(string)
 
-	recipes, err := h.svc.list(r.Context(), userID)
+	// Extract the recipeName from the request query parameters
+	recipeName := r.URL.Query().Get("recipe_name")
+
+	recipes, err := h.svc.list(r.Context(), userID, recipeName)
 	if err != nil {
 		// If an error occurs, send an appropriate HTTP response
 		http.Error(w, err.Error(), http.StatusNotFound)
