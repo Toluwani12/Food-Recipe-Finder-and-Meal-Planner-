@@ -318,21 +318,30 @@ func (r Repository) delete(ctx context.Context, id string) (string, error) {
 	return id, errors.Wrap(err, "ExecContext")
 }
 
-func (r Repository) list(ctx context.Context, userID string) ([]ListResponse, error) {
+func (r Repository) list(ctx context.Context, userID string, recipeName string) ([]ListResponse, error) {
 	var recipes []ListResponse
-	query := `
-		SELECT r.id, r.name, COALESCE(l.liked, false) AS liked
-		FROM recipes r
-		LEFT JOIN (SELECT recipe_id, true AS liked FROM likes WHERE user_id = $1) l ON r.id = l.recipe_id
-		ORDER BY r.name`
+	var query string
+	var args []interface{}
 
-	if userID == "" {
-		err := r.db.SelectContext(ctx, &recipes, query, nil)
-		return recipes, errors.Wrap(err, "SelectContext")
+	if userID != "" {
+		query = `
+			SELECT r.id, r.name, COALESCE(l.liked, false) AS liked
+			FROM recipes r
+			LEFT JOIN (SELECT recipe_id, true AS liked FROM likes WHERE user_id = $1) l ON r.id = l.recipe_id
+			WHERE r.name ILIKE $2
+			ORDER BY r.name`
+		args = append(args, userID, "%"+recipeName+"%")
 	} else {
-		err := r.db.SelectContext(ctx, &recipes, query, userID)
-		return recipes, errors.Wrap(err, "SelectContext")
+		query = `
+			SELECT r.id, r.name, false AS liked
+			FROM recipes r
+			WHERE r.name ILIKE $1
+			ORDER BY r.name`
+		args = append(args, "%"+recipeName+"%")
 	}
+
+	err := r.db.SelectContext(ctx, &recipes, query, args...)
+	return recipes, errors.Wrap(err, "SelectContext")
 }
 
 func (r Repository) update(ctx context.Context, data Recipe) (*Recipe, error) {
