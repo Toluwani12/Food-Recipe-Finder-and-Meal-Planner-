@@ -28,16 +28,12 @@ func (rs *Resource) Router() *chi.Mux {
 	usrPrefSvc := user_preference.NewService(usrPrefRepo)
 	hndlr := NewHandler(svc, usrPrefSvc)
 
-	r.Use(auth.AuthMiddleware)
-
-	//r.Put("/{id}", hndlr.update)
-	r.Get("/{id}/like", hndlr.like)
-	r.Get("/{id}", hndlr.get)
-	r.Get("/", hndlr.list)
 	r.Post("/search", hndlr.search)
-	//r.Post("/search2", hndlr.search2)
 	r.Group(func(r chi.Router) {
 		r.Use(auth.AuthMiddleware)
+		r.Get("/{id}/like", hndlr.like)
+		r.Get("/{id}", hndlr.get)
+		r.Get("/", hndlr.list)
 		r.Post("/", hndlr.save)
 		r.Delete("/{id}", hndlr.delete)
 	})
