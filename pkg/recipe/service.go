@@ -31,11 +31,17 @@ func (s Service) crawl(ctx context.Context) (map[string]bool, error) {
 		if err != nil {
 			log.WithFields(log.Fields{"service": "recipes/fetchAndSaveRecipes", "crawler": c}).WithError(err)
 		}
-		recipeList = append(recipeList, data...)
+		recipeList = append(recipeList, *data...)
 	}
-	_ = model.Request(recipeList)
-	return nil, nil
-	//return s.save(ctx, req)
+	//marshal, err := json.Marshal(recipeList)
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	//println(string(marshal))
+	req := model.Request(recipeList)
+
+	return s.save(ctx, req)
 }
 
 // AddRecipes adds a list of new recipes along with their ingredients to the database.

@@ -125,7 +125,7 @@ func (r Repository) bulkUpsertRecipes(ctx context.Context, tx *sqlx.Tx, recipes 
 	// First, check for duplicates
 	existingRecipes, err := checkForDuplicateRecipes(tx, recipes)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "checking for duplicate recipes")
 	}
 
 	// Prepare batch insert for new recipes
@@ -133,7 +133,8 @@ func (r Repository) bulkUpsertRecipes(ctx context.Context, tx *sqlx.Tx, recipes 
 	var insertArgs []interface{}
 	index := 1
 	for _, recipe := range recipes {
-		if _, exists := existingRecipes[recipe.Name]; !exists {
+		if _, exists := existingRecipes[strings.TrimSpace(recipe.Name)]; !exists {
+			existingRecipes[recipe.Name] = recipe.Name
 			insertValues = append(insertValues, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d)", index, index+1, index+2, index+3, index+4, index+5))
 			insertArgs = append(insertArgs, recipe.ID, recipe.Name, recipe.Description, recipe.ImgUrl, recipe.CookingTime, pq.Array(recipe.Instructions))
 			index += 6
@@ -149,7 +150,7 @@ func (r Repository) bulkUpsertRecipes(ctx context.Context, tx *sqlx.Tx, recipes 
 			strings.Join(insertValues, ", ") + " RETURNING name"
 		rows, err := tx.QueryContext(ctx, insertQuery, insertArgs...)
 		if err != nil {
-			return nil, fmt.Errorf("error executing batch insert for new recipes: %v", err)
+			return nil, errors.Wrap(err, "tx.QueryContext failed for insertQuery in bulkUpsertRecipes")
 		}
 		defer rows.Close()
 
@@ -157,13 +158,13 @@ func (r Repository) bulkUpsertRecipes(ctx context.Context, tx *sqlx.Tx, recipes 
 		for rows.Next() {
 			var name string
 			if err := rows.Scan(&name); err != nil {
-				return nil, fmt.Errorf("error scanning inserted recipes: %v", err)
+				return nil, errors.Wrap(err, "row.scan failed for inserted recipes")
 			}
 			results[name] = true
 		}
 
 		if err := rows.Err(); err != nil {
-			return nil, fmt.Errorf("error reading results for inserted recipes: %v", err)
+			return nil, errors.Wrap(err, "rows.Err failed for inserted recipes")
 		}
 	}
 
@@ -184,13 +185,13 @@ func checkForDuplicateRecipes(tx *sqlx.Tx, recipes model.Request) (map[string]st
 
 	query, args, err := sqlx.In("SELECT name, id FROM recipes WHERE name IN (?)", names)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing query to check duplicates: %v", err)
+		return nil, errors.Wrap(err, "sqlx.In failed for checking duplicate recipes")
 	}
 	query = tx.Rebind(query)
 
 	rows, err := tx.Queryx(query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error querying existing recipes: %v", err)
+		return nil, errors.Wrap(err, "tx.Queryx failed for checking duplicate recipes")
 	}
 	defer rows.Close()
 
@@ -198,13 +199,13 @@ func checkForDuplicateRecipes(tx *sqlx.Tx, recipes model.Request) (map[string]st
 	for rows.Next() {
 		var name, id string
 		if err := rows.Scan(&name, &id); err != nil {
-			return nil, fmt.Errorf("error scanning existing recipes: %v", err)
+			return nil, errors.Wrap(err, "rows.Scan failed for duplicate recipes")
 		}
 		existingRecipes[name] = id
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error reading results for duplicate recipes: %v", err)
+		return nil, errors.Wrap(err, "rows.Err failed for duplicate recipes")
 	}
 
 	return existingRecipes, nil
@@ -235,7 +236,7 @@ func (r Repository) linkIngredients(ctx context.Context, tx *sqlx.Tx, ingredient
 
 		// Execute the query with all arguments
 		if _, err := tx.ExecContext(ctx, linkQuery, linkArgs...); err != nil {
-			return errors.Wrap(err, "executing batch insert for recipe_ingredients with conflict handling")
+			return errors.Wrap(err, "tx.ExecContext failed for linkQuery in linkIngredients")
 		}
 	}
 
@@ -252,12 +253,12 @@ func (r Repository) bulkUpsertIngredients(ctx context.Context, tx *sqlx.Tx, ingr
 	// Step 1: Query existing ingredients to avoid duplicates
 	query, args, err := sqlx.In("SELECT id, name FROM ingredients WHERE name IN (?)", ingredientNames)
 	if err != nil {
-		return nil, errors.Wrap(err, "preparing query for existing ingredients")
+		return nil, errors.Wrap(err, "sqlx.In failed for querying existing ingredients")
 	}
 	query = tx.Rebind(query)
 	rows, err := tx.QueryxContext(ctx, query, args...)
 	if err != nil {
-		return nil, errors.Wrap(err, "querying existing ingredients")
+		return nil, errors.Wrap(err, "tx.QueryxContext failed for querying existing ingredients")
 	}
 	defer rows.Close()
 
@@ -266,7 +267,7 @@ func (r Repository) bulkUpsertIngredients(ctx context.Context, tx *sqlx.Tx, ingr
 		var id string
 		var name string
 		if err := rows.Scan(&id, &name); err != nil {
-			return nil, errors.Wrap(err, "scanning ingredients")
+			return nil, errors.Wrap(err, "rows.Scan failed for existing ingredients")
 		}
 		ingredientIDs[name] = id
 		existingIngredients[name] = true
@@ -291,13 +292,13 @@ func (r Repository) bulkUpsertIngredients(ctx context.Context, tx *sqlx.Tx, ingr
 		insertQuery := "INSERT INTO ingredients (name) VALUES " + strings.Join(values, ", ") + " RETURNING id, name"
 		insertStmt, err := tx.PrepareContext(ctx, insertQuery)
 		if err != nil {
-			return nil, errors.Wrap(err, "preparing insert for new ingredients")
+			return nil, errors.Wrap(err, "tx.PrepareContext failed for new ingredients")
 		}
 		defer insertStmt.Close()
 
 		insertRows, err := insertStmt.QueryContext(ctx, insertArgs...)
 		if err != nil {
-			return nil, errors.Wrap(err, "executing insert for new ingredients")
+			return nil, errors.Wrap(err, "insertStmt.QueryContext failed for new ingredients")
 		}
 		defer insertRows.Close()
 
@@ -305,7 +306,7 @@ func (r Repository) bulkUpsertIngredients(ctx context.Context, tx *sqlx.Tx, ingr
 			var id string
 			var name string
 			if err := insertRows.Scan(&id, &name); err != nil {
-				return nil, errors.Wrap(err, "scanning inserted ingredients")
+				return nil, errors.Wrap(err, "insertRows.Scan failed for new ingredients")
 			}
 			ingredientIDs[name] = id
 		}

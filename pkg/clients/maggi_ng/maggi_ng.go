@@ -29,9 +29,10 @@ func NewClient() *Client {
 }
 
 // FetchData method defined on the Client type.
-func (c *Client) FetchLinks(params SearchParams) (*model.Request, error) {
-	_, cancel := chromedp.NewContext(context.Background())
+func (c *Client) FetchLinks(params SearchParams) (*[]model.RequestData, error) {
+	ctx, cancel := chromedp.NewContext(context.Background())
 	defer cancel()
+	res := []model.RequestData{}
 
 	for page := 0; ; page++ {
 		var response SearchRecipeResponse
@@ -42,28 +43,22 @@ func (c *Client) FetchLinks(params SearchParams) (*model.Request, error) {
 			return nil, err
 		}
 
-		println(response.Results.SearchResults[0].Pagination.TotalPages)
-		println(response.Results.SearchResults[0].SearchResultList)
-
-		//res := model.Request{}
 		for _, result := range response.Results.SearchResults {
 			for _, link := range result.SearchResultList {
-				println(link.ContentLink.Link)
+				recipe, err := c.FetchRecipe(ctx, link.ContentLink.Link)
+				if err != nil {
+					log.Printf("Failed to fetch recipe: %v", err)
+				}
+				res = append(res, *recipe)
 			}
-			//	link := result.SearchResultList[0].ContentLink.Link
-			//	//recipe, err := c.FetchRecipe(ctx, string(link))
-			//	if err != nil {
-			//		log.Printf("Failed to fetch recipe: %v", err)
-			//	}
-			//	res = append(res, *recipe)
 		}
 
-		if page >= response.Results.SearchResults[0].Pagination.TotalPages {
+		if page >= response.Results.SearchResults[0].Pagination.TotalPages-1 {
 			break
 		}
 	}
 
-	return nil, nil
+	return &res, nil
 }
 
 func (c *Client) FetchRecipe(ctx context.Context, url string) (*model.RequestData, error) {

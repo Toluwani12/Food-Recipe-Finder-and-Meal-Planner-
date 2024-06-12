@@ -7,7 +7,7 @@ import (
 )
 
 type ICrawler interface {
-	CrawlRecipe() ([]model.RequestData, error)
+	CrawlRecipe() (*[]model.RequestData, error)
 }
 
 func AddCrawler(crawlerNames []string) []ICrawler {
