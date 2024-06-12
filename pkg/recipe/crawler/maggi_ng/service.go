@@ -13,7 +13,7 @@ func NewMaggiCrawler(client *maggi_ng.Client) *MaggiCrawler {
 	return &MaggiCrawler{Client: client}
 }
 
-func (mc *MaggiCrawler) CrawlRecipe() ([]model.RequestData, error) {
+func (mc *MaggiCrawler) CrawlRecipe() (*[]model.RequestData, error) {
 	params := maggi_ng.SearchParams{
 		ContentType: "",
 		Range:       0,
@@ -25,8 +25,5 @@ func (mc *MaggiCrawler) CrawlRecipe() ([]model.RequestData, error) {
 		return nil, err
 	}
 
-	// Process the data and return the recipes
-	print(data)
-
-	return nil, nil
+	return data, nil
 }
