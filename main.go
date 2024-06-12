@@ -2,6 +2,7 @@ package main
 
 import (
 	"Food/pkg/recipe"
+	"Food/pkg/recipe/crawler"
 	"Food/pkg/users"
 	"context"
 	"github.com/chromedp/chromedp"
@@ -50,7 +51,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	r.Mount("/recipes", recipe.NewResource(db).Router())
+	crawlerList := crawler.AddCrawler([]string{"maggi_ng"})
+
+	r.Mount("/recipes", recipe.NewResource(db, crawlerList).Router())
 
 	//r.Mount("/ingredients", ingredient.NewResource(db).Router())
 

@@ -29,6 +29,7 @@ func (rs *Resource) Router() *chi.Mux {
 	//r.Post("/meal-plans", hndlr.save)
 	//r.Get("/meal-plans", hndlr.get)
 	r.Post("/generate", hndlr.generate)
+	r.Get("/view-weekly-plan", hndlr.get)
 	r.Get("/", hndlr.GetMealPlansForDay)
 
 	return r

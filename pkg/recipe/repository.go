@@ -3,6 +3,7 @@ package recipe
 import (
 	liberror "Food/internal/errors"
 	"Food/pkg"
+	"Food/pkg/recipe/model"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -58,7 +59,7 @@ func (r Repository) getByName(ctx context.Context, name string) (*Recipe, error)
 	return &recipe, errors.Wrap(err, "db.GetContext failed")
 }
 
-func (r Repository) processRecipesAndIngredients(ctx context.Context, recipes Request) (map[string]bool, error) {
+func (r Repository) processRecipesAndIngredients(ctx context.Context, recipes model.Request) (map[string]bool, error) {
 	// Start a transaction
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -87,7 +88,7 @@ func (r Repository) processRecipesAndIngredients(ctx context.Context, recipes Re
 	}
 
 	// Filter recipes to include only those successfully added
-	newRecipes := make(Request, 0)
+	newRecipes := make(model.Request, 0)
 	for _, recipe := range recipes {
 		if success, exists := successMap[recipe.Name]; exists && success {
 			newRecipes = append(newRecipes, recipe)
@@ -120,7 +121,7 @@ func (r Repository) processRecipesAndIngredients(ctx context.Context, recipes Re
 }
 
 // bulkUpsertRecipes processes a batch of recipes, inserts new ones in a batch, and reports duplicates with boolean flags.
-func (r Repository) bulkUpsertRecipes(ctx context.Context, tx *sqlx.Tx, recipes Request) (map[string]bool, error) {
+func (r Repository) bulkUpsertRecipes(ctx context.Context, tx *sqlx.Tx, recipes model.Request) (map[string]bool, error) {
 	// First, check for duplicates
 	existingRecipes, err := checkForDuplicateRecipes(tx, recipes)
 	if err != nil {
@@ -175,7 +176,7 @@ func (r Repository) bulkUpsertRecipes(ctx context.Context, tx *sqlx.Tx, recipes 
 }
 
 // checkForDuplicateRecipes checks the database for existing recipes with the same names.
-func checkForDuplicateRecipes(tx *sqlx.Tx, recipes Request) (map[string]string, error) {
+func checkForDuplicateRecipes(tx *sqlx.Tx, recipes model.Request) (map[string]string, error) {
 	names := make([]interface{}, len(recipes))
 	for i, recipe := range recipes {
 		names[i] = recipe.Name
@@ -209,7 +210,7 @@ func checkForDuplicateRecipes(tx *sqlx.Tx, recipes Request) (map[string]string, 
 	return existingRecipes, nil
 }
 
-func (r Repository) linkIngredients(ctx context.Context, tx *sqlx.Tx, ingredientIDs map[string]string, recipes Request) error {
+func (r Repository) linkIngredients(ctx context.Context, tx *sqlx.Tx, ingredientIDs map[string]string, recipes model.Request) error {
 
 	linkValues := []string{}
 	linkArgs := []interface{}{}

@@ -36,6 +36,24 @@ func (h *Handler) generate(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
+
+	userID := r.Context().Value("user_id").(string)
+	weekStartDate := getStartOfWeek()
+
+	placeholders, err := h.svc.getMealPLan(userID, weekStartDate)
+	if err != nil {
+		pkg.Render(w, r, err)
+		return
+	}
+
+	pkg.Render(w, r, pkg.ApiResponse{
+		Data:    placeholders,
+		Message: "Meal plans generated successfully",
+		Code:    http.StatusOK,
+	})
+}
+
 func getStartOfWeek() time.Time {
 	now := time.Now()
 	weekday := int(now.Weekday())
