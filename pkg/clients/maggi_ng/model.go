@@ -8,7 +8,7 @@ type SearchRecipeResponse struct {
 			Pagination struct {
 				ItemsPerPage int `json:"items_per_page"`
 				TotalPages   int `json:"total_pages"`
-				CurrentPage  int `json:"current_page"`
+				CurrentPage  any `json:"current_page"`
 			} `json:"pagination"`
 			TabTitle      string `json:"tabTitle"`
 			TabType       string `json:"tabType"`
@@ -46,7 +46,7 @@ type SearchRecipeResponse struct {
 				RecipeAjax        string  `json:"recipe_ajax"`
 				Contenttime       string  `json:"contenttime"`
 				Contentdifficulty string  `json:"contentdifficulty"`
-				RecipeScore       int     `json:"recipe_score"`
+				RecipeScore       any     `json:"recipe_score"`
 				Type              string  `json:"type"`
 			} `json:"searchResultList"`
 		} `json:"searchResults"`

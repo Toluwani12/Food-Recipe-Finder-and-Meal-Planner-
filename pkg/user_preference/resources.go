@@ -24,7 +24,7 @@ func (rs *Resource) Router() *chi.Mux {
 	svc := NewService(repo)
 	hndlr := NewHandler(svc)
 
-	r.Use(auth.AuthMiddleware)
+	r.Use(auth.MustAuthMiddleware)
 	r.Post("/", hndlr.add)
 	r.Delete("/", hndlr.delete)
 	r.Get("/", hndlr.get)
