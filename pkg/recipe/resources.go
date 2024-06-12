@@ -33,8 +33,8 @@ func (rs *Resource) Router() *chi.Mux {
 
 	r.Group(func(r chi.Router) {
 		r.Use(auth.MayAuthMiddleware)
+		r.Post("/search", hndlr.search)
 	})
-	r.Post("/search", hndlr.search)
 	r.Get("/crawl", hndlr.crawl)
 	r.Group(func(r chi.Router) {
 		r.Use(auth.MustAuthMiddleware)
