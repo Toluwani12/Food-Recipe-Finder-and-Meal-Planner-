@@ -32,14 +32,15 @@ func (rs *Resource) Router() *chi.Mux {
 	r.Group(func(r chi.Router) {
 		r.Use(auth.AuthMiddleware)
 
-		r.Get("/", hndlr.list)
 		r.Route("/{id}", func(r chi.Router) {
-			r.Get("/", hndlr.get)
 			r.Mount("/preferences", user_preference.NewResource(rs.db).Router())
 			r.Mount("/meal-plans", mealplan.NewResource(rs.db).Router())
+			r.Get("/", hndlr.get)
 			r.Delete("/", hndlr.delete)
 			r.Put("/", hndlr.update)
 		})
+
+		r.Get("/", hndlr.list)
 
 	})
 

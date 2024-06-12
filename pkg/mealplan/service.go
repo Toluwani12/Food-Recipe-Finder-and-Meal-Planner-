@@ -21,9 +21,7 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) generateMealPlans(userID string, weekStartDate time.Time) ([]MealPlanPlaceholderDTO, error) {
-	// Simulating a call to a recommendation engine
-	// In a real scenario, this might involve an HTTP request to an external service
+func (s Service) getMealPLan(userID string, weekStartDate time.Time) ([]MealPlanPlaceholderDTO, error) {
 	placeholders, err := s.repo.GetMealPlanPlaceholders(userID, weekStartDate)
 	if err != nil {
 		return nil, liberror.CoverErr(err,
@@ -33,9 +31,10 @@ func (s *Service) generateMealPlans(userID string, weekStartDate time.Time) ([]M
 			}).WithError(err))
 	}
 
-	if len(placeholders) > 0 {
-		return placeholders, nil
-	}
+	return placeholders, nil
+}
+
+func (s *Service) generateMealPlans(userID string, weekStartDate time.Time) ([]MealPlanPlaceholderDTO, error) {
 
 	recommendedMealPlans, err := s.callRecommendationEngine(userID, weekStartDate)
 	if err != nil {
@@ -60,7 +59,7 @@ func (s *Service) generateMealPlans(userID string, weekStartDate time.Time) ([]M
 	}
 
 	// Retrieve the placeholders using the repository method
-	placeholders, err = s.repo.GetMealPlanPlaceholders(userID, weekStartDate)
+	placeholders, err := s.repo.GetMealPlanPlaceholders(userID, weekStartDate)
 	if err != nil {
 		return nil, liberror.CoverErr(err,
 			errors.New("service temporarily unavailable. Please try again later"),

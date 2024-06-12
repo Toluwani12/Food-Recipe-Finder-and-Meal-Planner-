@@ -3,6 +3,8 @@ package recipe
 import (
 	liberror "Food/internal/errors"
 	"Food/pkg"
+	"Food/pkg/recipe/crawler"
+	"Food/pkg/recipe/model"
 	"context"
 	"errors"
 	"github.com/google/uuid"
@@ -11,15 +13,33 @@ import (
 )
 
 type Service struct {
-	repo *Repository
+	repo        *Repository
+	crawlerList []crawler.ICrawler
 }
 
-func NewService(repo *Repository) *Service {
-	return &Service{repo: repo}
+func NewService(repo *Repository, crawlerList []crawler.ICrawler) *Service {
+	return &Service{
+		repo:        repo,
+		crawlerList: crawlerList,
+	}
+}
+
+func (s Service) crawl(ctx context.Context) (map[string]bool, error) {
+	recipeList := make([]model.RequestData, 0, len(s.crawlerList))
+	for _, c := range s.crawlerList {
+		data, err := c.CrawlRecipe()
+		if err != nil {
+			log.WithFields(log.Fields{"service": "recipes/fetchAndSaveRecipes", "crawler": c}).WithError(err)
+		}
+		recipeList = append(recipeList, data...)
+	}
+	_ = model.Request(recipeList)
+	return nil, nil
+	//return s.save(ctx, req)
 }
 
 // AddRecipes adds a list of new recipes along with their ingredients to the database.
-func (s Service) save(ctx context.Context, recipes Request) (map[string]bool, error) {
+func (s Service) save(ctx context.Context, recipes model.Request) (map[string]bool, error) {
 
 	// Ensure all IDs are set for recipes, ingredients, and their alternatives
 	for i := range recipes {
@@ -76,10 +96,3 @@ func (s Service) search(ctx context.Context, ingredients []string, queryParams u
 		errors.New("service temporarily unavailable. Please try again later"),
 		log.WithFields(log.Fields{"service": "recipes/findRecipes", "repo": "recipes/findRecipes"}).WithError(err))
 }
-
-//func (s Service) search2(ctx context.Context, ingredients []string, queryParams url.Values) (interface{}, *pkg.Pagination, error) {
-//	recipes, pg, err := s.repo.Search(ctx, ingredients, queryParams)
-//	return recipes, pg, liberror.CoverErr(err,
-//		errors.New("service temporarily unavailable. Please try again later"),
-//		log.WithFields(log.Fields{"service": "recipes/findRecipes", "repo": "recipes/findRecipes"}).WithError(err))
-//}

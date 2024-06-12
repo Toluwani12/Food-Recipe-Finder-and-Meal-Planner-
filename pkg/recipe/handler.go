@@ -2,6 +2,7 @@ package recipe
 
 import (
 	"Food/pkg"
+	"Food/pkg/recipe/model"
 	"Food/pkg/user_preference"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
@@ -20,6 +21,20 @@ func NewHandler(svc *Service, usrPrefSvc *user_preference.Service) *Handler {
 		svc:        svc,
 		usrPrefSvc: usrPrefSvc,
 	}
+}
+
+func (h Handler) crawl(w http.ResponseWriter, r *http.Request) {
+	recipeList, err := h.svc.crawl(r.Context())
+	if err != nil {
+		pkg.Render(w, r, err)
+		return
+	}
+
+	pkg.Render(w, r, pkg.ApiResponse{
+		Data:    recipeList,
+		Message: "Recipes retrieved successfully",
+		Code:    http.StatusOK,
+	})
 }
 
 func (h Handler) like(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +62,7 @@ func (h Handler) like(w http.ResponseWriter, r *http.Request) {
 
 // addRecipe is a HTTP handler for adding a new recipe.
 func (h Handler) save(w http.ResponseWriter, r *http.Request) {
-	var recipes Request
+	var recipes model.Request
 	// Decode the JSON body into the recipe DTO
 	userID := r.Context().Value("user_id").(string)
 	log.Infoln("user id", userID)
@@ -94,28 +109,6 @@ func (h Handler) delete(w http.ResponseWriter, r *http.Request) {
 		Code:    200,
 	})
 }
-
-//func (h Handler) update(w http.ResponseWriter, r *http.Request) {
-//	id := chi.URLParam(r, "id")
-//
-//	var data AddRequest
-//	if err := render.Bind(r, &data); err != nil {
-//		pkg.Render(w, r, err)
-//		return
-//	}
-//
-//	recipe, err := h.svc.update(r.Context(), id, data)
-//	if err != nil {
-//		pkg.Render(w, r, nil)
-//		return
-//	}
-//
-//	pkg.Render(w, r, pkg.ApiResponse{
-//		Data:    recipe,
-//		Message: "recipe updated successfully",
-//		Code:    200,
-//	})
-//}
 
 func (h Handler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
