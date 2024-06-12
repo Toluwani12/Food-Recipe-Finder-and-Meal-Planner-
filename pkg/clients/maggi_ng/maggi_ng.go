@@ -36,7 +36,7 @@ func (c *Client) FetchLinks(params SearchParams) (*model.Request, error) {
 	for page := 0; ; page++ {
 		var response SearchRecipeResponse
 
-		err := c.Get(fmt.Sprintf("/search-ajax-results?content_type=srh_recipe&page=%d&range=12&searchpage=false", page), params, &response) // Ensure response is a pointer
+		err := c.Get(fmt.Sprintf("/search-ajax-results?content_type=srh_recipe&page=%d&range=12&searchpage=false", page), nil, &response) // Ensure response is a pointer
 		if err != nil {
 			log.Printf("Failed to fetch recipes: %v", err)
 			return nil, err

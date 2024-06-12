@@ -30,7 +30,7 @@ func (rs *Resource) Router() *chi.Mux {
 	r.Post("/", hndlr.save)
 
 	r.Group(func(r chi.Router) {
-		r.Use(auth.AuthMiddleware)
+		r.Use(auth.MustAuthMiddleware)
 
 		r.Route("/{id}", func(r chi.Router) {
 			r.Mount("/preferences", user_preference.NewResource(rs.db).Router())

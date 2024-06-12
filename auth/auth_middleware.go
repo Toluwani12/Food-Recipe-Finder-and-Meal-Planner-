@@ -4,17 +4,48 @@ import (
 	"context"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
 )
 
 var jwtSecretKey = []byte("your_secret_key")
 
-func AuthMiddleware(next http.Handler) http.Handler {
+func MustAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return jwtSecretKey, nil
+		})
+
+		if err != nil || !token.Valid {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// add the user_id to the context
+		claims := token.Claims.(jwt.MapClaims)
+		r = r.WithContext(setUserIDInContext(r.Context(), claims["user_id"].(string)))
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func MayAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+			log.Println("a guest user signed in")
+			next.ServeHTTP(w, r)
 			return
 		}
 
