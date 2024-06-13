@@ -134,7 +134,6 @@ func (r Repository) bulkUpsertRecipes(ctx context.Context, tx *sqlx.Tx, recipes 
 	index := 1
 	for _, recipe := range recipes {
 		if _, exists := existingRecipes[strings.TrimSpace(recipe.Name)]; !exists {
-			existingRecipes[recipe.Name] = recipe.Name
 			insertValues = append(insertValues, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d)", index, index+1, index+2, index+3, index+4, index+5))
 			insertArgs = append(insertArgs, recipe.ID, recipe.Name, recipe.Description, recipe.ImgUrl, recipe.CookingTime, pq.Array(recipe.Instructions))
 			index += 6
@@ -378,7 +377,13 @@ type ResponseData struct {
 	CookingTime  string         `json:"cooking_time" db:"cooking_time"`
 	Instructions pq.StringArray `json:"instructions" db:"instructions"`
 	ImgUrl       string         `json:"img_url" db:"img_url"`
-	Ingredients  Ingredients    `json:"ingredients" db:"-"`
+	Ingredients  []Ingredient   `json:"ingredients" db:"ingredients"`
+	Diff         int            `json:"diff" db:"diff"`
+	FoodHealth   string         `json:"food_health,omitempty" db:"food_health"`
+	FoodClass    string         `json:"food_class,omitempty" db:"food_class"`
+	Region       string         `json:"region,omitempty" db:"region"`
+	SpiceLevel   string         `json:"spice_level,omitempty" db:"spice_level"`
+	Type         string         `json:"type,omitempty" db:"type"`
 	Liked        bool           `json:"liked" db:"liked"`
 }
 
@@ -409,6 +414,17 @@ func (r *Repository) search(ctx context.Context, ingredients []string, queryPara
 }
 
 func (r *Repository) findAllRecipes(ctx context.Context, queryParams url.Values, userID string) ([]ResponseData, *pkg.Pagination, error) {
+	var recipes []ResponseData
+
+	if queryParams == nil {
+		query := `
+			SELECT r.id, r.name, r.description, r.cooking_time, r.instructions, r.img_url, false AS liked
+			FROM recipes r
+			ORDER BY r.name`
+		err := r.db.SelectContext(ctx, &recipes, query)
+		return recipes, nil, errors.Wrap(err, "db.SelectContext failed")
+	}
+
 	page, pageSize, err := pkg.ParsePaginationParams(queryParams)
 	if err != nil {
 		return nil, nil, err
@@ -421,7 +437,6 @@ func (r *Repository) findAllRecipes(ctx context.Context, queryParams url.Values,
 		return nil, nil, errors.Wrap(err, "db.GetContext failed")
 	}
 
-	var recipes []ResponseData
 	var query string
 	if userID == "" {
 		query = `
@@ -454,7 +469,7 @@ func (r *Repository) findMatches(ctx context.Context, ingredients []string, quer
 	}
 
 	ingredientList := strings.Join(ingredients, "|")
-	matchCondition := "COUNT(DISTINCT i.name) = $2"
+	matchCondition := "COUNT(DISTINCT i.name ) = $2"
 	orderCondition := "ORDER BY r.name"
 
 	if !exactMatch {
@@ -473,6 +488,9 @@ func (r *Repository) findMatches(ctx context.Context, ingredients []string, quer
 
 	var totalItems int
 	err = r.db.GetContext(ctx, &totalItems, countQuery, ingredientList, len(ingredients))
+	if err == sql.ErrNoRows {
+		return nil, nil, liberror.ErrNotFound
+	}
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "db.GetContext failed")
 	}

@@ -16,22 +16,22 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) get(ctx context.Context, userID string) ([]string, error) {
-	var recipeNames []string
+func (r *Repository) get(ctx context.Context, userID string) ([]Recipe, error) {
+	var recipes []Recipe
 	query := `
-		SELECT r.name
+		SELECT r.id, r.name
 		FROM recipes r
 		JOIN unnest(
 			(SELECT recipe_ids
 			 FROM user_preferences
 			 WHERE user_id = $1)
 		) as recipe_id ON r.id = recipe_id`
-	err := r.db.SelectContext(ctx, &recipeNames, query, userID)
+	err := r.db.SelectContext(ctx, &recipes, query, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	return recipeNames, nil
+	return recipes, nil
 }
 
 func (r *Repository) add(ctx context.Context, tx *sqlx.Tx, userID string, recipeIDs []uuid.UUID) error {
