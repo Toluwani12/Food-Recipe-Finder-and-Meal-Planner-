@@ -33,12 +33,7 @@ func (s Service) crawl(ctx context.Context) (map[string]bool, error) {
 		}
 		recipeList = append(recipeList, *data...)
 	}
-	//marshal, err := json.Marshal(recipeList)
-	//if err != nil {
-	//	return nil, err
-	//}
 
-	//println(string(marshal))
 	req := model.Request(recipeList)
 
 	return s.save(ctx, req)
@@ -47,6 +42,16 @@ func (s Service) crawl(ctx context.Context) (map[string]bool, error) {
 // AddRecipes adds a list of new recipes along with their ingredients to the database.
 func (s Service) save(ctx context.Context, recipes model.Request) (map[string]bool, error) {
 
+	dupl := make(map[string]bool)
+	var uniqueRecipes []model.RequestData
+	for _, recipe := range recipes {
+		if _, ok := dupl[recipe.Name]; !ok {
+			dupl[recipe.Name] = true
+			uniqueRecipes = append(uniqueRecipes, recipe)
+		}
+	}
+
+	recipes = uniqueRecipes
 	// Ensure all IDs are set for recipes, ingredients, and their alternatives
 	for i := range recipes {
 		if recipes[i].ID == uuid.Nil {
@@ -96,7 +101,7 @@ func (s Service) list(ctx context.Context, userID string, recipeName string) ([]
 		log.WithFields(log.Fields{"service": "recipes/list", "repo": "recipes/list"}).WithError(err))
 }
 
-func (s Service) search(ctx context.Context, ingredients []string, queryParams url.Values, userId string) (interface{}, *pkg.Pagination, error) {
+func (s Service) search(ctx context.Context, ingredients []string, queryParams url.Values, userId string) ([]ResponseData, *pkg.Pagination, error) {
 	recipes, pg, err := s.repo.search(ctx, ingredients, queryParams, userId)
 	return recipes, pg, liberror.CoverErr(err,
 		errors.New("service temporarily unavailable. Please try again later"),
