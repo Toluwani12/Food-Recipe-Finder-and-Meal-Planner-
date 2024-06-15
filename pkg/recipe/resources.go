@@ -36,6 +36,7 @@ func (rs *Resource) Router() *chi.Mux {
 		r.Post("/search", hndlr.search)
 	})
 	r.Get("/crawl", hndlr.crawl)
+	//r.Get("/generate-csv", hndlr.generateCsv)
 	r.Group(func(r chi.Router) {
 		r.Use(auth.MustAuthMiddleware)
 		r.Get("/{id}/like", hndlr.like)

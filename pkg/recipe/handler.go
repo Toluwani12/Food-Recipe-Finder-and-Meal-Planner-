@@ -186,28 +186,16 @@ func (h Handler) search(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-//func (h Handler) search2(w http.ResponseWriter, r *http.Request) {
-//	log.Infoln("Searching for recipes with ingredientsssssssssssssssssss: ", r.URL.Query().Get("ingredients"))
-//	var req SearchRequest
+//func (h Handler) generateCsv(w http.ResponseWriter, r *http.Request) {
 //
-//	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-//		http.Error(w, "Invalid request body", http.StatusBadRequest)
-//		return
-//	}
-//
-//	log.Infoln("Searching for recipes with ingredients: ", req.Ingredients)
-//
-//	queryParams := r.URL.Query()
-//	recipes, pagination, err := h.svc.search2(r.Context(), req.Ingredients, queryParams)
+//	err := h.svc.generateCsv(r.Context())
 //	if err != nil {
 //		pkg.Render(w, r, err)
 //		return
 //	}
 //
 //	pkg.Render(w, r, pkg.ApiResponse{
-//		Data:       recipes,
-//		Message:    "Recipes retrieved successfully",
-//		Code:       http.StatusOK,
-//		Pagination: pagination,
+//		Message: "csv generated successfully",
+//		Code:    http.StatusOK,
 //	})
 //}

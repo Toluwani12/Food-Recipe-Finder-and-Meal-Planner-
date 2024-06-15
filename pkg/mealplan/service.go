@@ -142,7 +142,7 @@ func (s *Service) callRecommendationEngine(userID string, weekStartDate time.Tim
 func (s *Service) GetMealPlan() {
 	s.saveEmbeddings()
 	// List of selected food names
-	selectedFoodNames := []string{"Efo Riro", "Jollof Rice", "Pounded Yam"}
+	selectedFoodNames := []string{"Beans Pottage", "Brown Rice Jollof Delight", "EGUSI IJEBU With POUNDED YAM"}
 
 	// Convert the list to a PostgreSQL array string
 	foodNamesArray := "{" + string(selectedFoodNames[0])
@@ -193,7 +193,7 @@ func (s *Service) GetMealPlan() {
 
 func (s *Service) saveEmbeddings() {
 	// Step 1: Read and clean the CSV file
-	file, err := os.Open("./../Nigerian Foods.csv")
+	file, err := os.Open("./Request-data.csv")
 	if err != nil {
 		log.Fatal(err)
 	}
