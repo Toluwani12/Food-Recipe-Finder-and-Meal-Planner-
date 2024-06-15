@@ -82,11 +82,12 @@ func (c *Client) FetchRecipe(ctx context.Context, url string) (*model.RequestDat
 	err = chromedp.Run(ctx,
 		chromedp.WaitVisible(`h1[data-recipeid]`, chromedp.ByQuery),
 		chromedp.Text(`h1[data-recipeid]`, &recipe.Name, chromedp.NodeVisible),
-		chromedp.Text(`div.mg-recipe-instructions__header > h2`, &recipe.Description, chromedp.NodeVisible),
 		chromedp.Text(`div.recipe-inst-totalmins`, &recipe.CookingTime, chromedp.NodeVisible),
 		chromedp.Evaluate(`Array.from(document.querySelectorAll('li.mg-recipe-instructions__steps')).map(step => step.innerText)`, &recipe.Instructions),
 		chromedp.AttributeValue(`div.mg-stage-carousel__slide img`, "src", &recipe.ImgUrl, nil),
 	)
+
+	recipe.Description = recipe.Name
 	if err != nil {
 		log.Fatalf("Failed to extract recipe details: %v", err)
 	}

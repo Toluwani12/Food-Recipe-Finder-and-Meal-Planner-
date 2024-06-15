@@ -54,6 +54,16 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handler) getRecommendation(w http.ResponseWriter, r *http.Request) {
+
+	h.svc.GetMealPlan()
+
+	pkg.Render(w, r, pkg.ApiResponse{
+		Message: "Meal plans generated successfully",
+		Code:    http.StatusOK,
+	})
+}
+
 func getStartOfWeek() time.Time {
 	now := time.Now()
 	weekday := int(now.Weekday())
