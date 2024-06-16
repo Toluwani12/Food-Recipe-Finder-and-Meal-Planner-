@@ -4,6 +4,7 @@ import (
 	"Food/internal/errors"
 	"Food/pkg"
 	"encoding/json"
+	"github.com/google/uuid"
 	"net/http"
 	"time"
 )
@@ -23,7 +24,7 @@ func (h *Handler) generate(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("user_id").(string)
 	weekStartDate := getStartOfWeek()
 
-	placeholders, err := h.svc.generateMealPlans(userID, weekStartDate)
+	placeholders, err := h.svc.generateMealPlans(r.Context(), uuid.MustParse(userID), weekStartDate)
 	if err != nil {
 		pkg.Render(w, r, err)
 		return
@@ -49,16 +50,6 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 
 	pkg.Render(w, r, pkg.ApiResponse{
 		Data:    placeholders,
-		Message: "Meal plans generated successfully",
-		Code:    http.StatusOK,
-	})
-}
-
-func (h *Handler) getRecommendation(w http.ResponseWriter, r *http.Request) {
-
-	h.svc.GetMealPlan()
-
-	pkg.Render(w, r, pkg.ApiResponse{
 		Message: "Meal plans generated successfully",
 		Code:    http.StatusOK,
 	})
