@@ -2,6 +2,7 @@ package mealplan
 
 import (
 	"Food/pkg/recipe"
+	"context"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -125,16 +126,36 @@ func (r *Repository) GetMealPlanPlaceholders(userID string, weekStartDate time.T
 	return placeholders, errors.Wrap(err, "failed to get meal plan placeholders")
 }
 
-func (r *Repository) GetRandomRecipes(n int) ([]recipe.Recipe, error) {
+func (r *Repository) RecommendRecipes(ctx context.Context, userID uuid.UUID, limit int) ([]recipe.Recipe, error) {
 	var recipes []recipe.Recipe
-	query := `
-		SELECT id, name, description, cooking_time, instructions, img_url
-		FROM recipes
-		ORDER BY RANDOM()
-		LIMIT $1`
-	err := r.db.Select(&recipes, query, n)
 
-	return recipes, errors.Wrap(err, "failed to get random recipes")
+	query := `
+    WITH recommended AS (
+        SELECT recipe_id, similarity
+        FROM recommend_recipes($1, $2)
+    )
+    SELECT
+        r.id,
+        r.name,
+        r.description,
+        r.cooking_time,
+        r.instructions,
+        r.img_url,
+        rec.similarity
+    FROM
+        recommended rec
+    JOIN recipes r ON rec.recipe_id = r.id
+    ORDER BY
+        rec.similarity DESC
+    LIMIT $2;
+    `
+
+	err := r.db.SelectContext(ctx, &recipes, query, userID, limit)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to recommend recipes")
+	}
+
+	return recipes, nil
 }
 
 func (r *Repository) CheckMealPlanExists(userID string, weekStartDate time.Time) (bool, error) {

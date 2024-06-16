@@ -13,6 +13,7 @@ type Recipe struct {
 	Instructions string                  `json:"instructions" db:"instructions"`
 	ImgUrl       string                  `json:"img_url" db:"img_url"`
 	Ingredients  []ingredient.Ingredient `json:"ingredients"` // Convenient for handling full recipes
+	Similarity   float64                 `json:"similarity" db:"similarity"`
 	CreatedAt    time.Time               `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time               `json:"updated_at" db:"updated_at"`
 }
