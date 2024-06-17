@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Food/pkg/ingredient"
 	"Food/pkg/recipe"
 	"Food/pkg/recipe/crawler"
 	"Food/pkg/users"
@@ -55,7 +56,7 @@ func main() {
 
 	r.Mount("/recipes", recipe.NewResource(db, crawlerList).Router())
 
-	//r.Mount("/ingredients", ingredient.NewResource(db).Router())
+	r.Mount("/ingredients", ingredient.NewResource(db).Router())
 
 	r.Mount("/users", users.NewResource(db).Router())
 

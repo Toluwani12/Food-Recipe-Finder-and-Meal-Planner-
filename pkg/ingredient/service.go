@@ -1,22 +1,20 @@
 package ingredient
 
-//
-//import (
-//	liberror "Food/internal/errors"
-//	"context"
-//	"errors"
-//	log "github.com/sirupsen/logrus"
-//	"time"
-//)
-//
-//type Service struct {
-//	repo *Repository
-//}
-//
-//func NewService(repo *Repository) *Service {
-//	return &Service{repo: repo}
-//}
-//
+import (
+	liberror "Food/internal/errors"
+	"context"
+	"errors"
+	log "github.com/sirupsen/logrus"
+)
+
+type Service struct {
+	repo *Repository
+}
+
+func NewService(repo *Repository) *Service {
+	return &Service{repo: repo}
+}
+
 //func (s Service) save(ctx context.Context, data AddRequest) (*Ingredient, error) {
 //	ingredient := Ingredient{
 //		Name:         data.Name,
@@ -68,10 +66,10 @@ package ingredient
 //		errors.New("service temporarily unavailable. Please try again later"),
 //		log.WithFields(log.Fields{"service": "ingredients/get", "repo": "ingredients/get"}).WithError(err))
 //}
-//
-//func (s Service) list(ctx context.Context) (Ingredients, error) {
-//	resp, err := s.repo.list(ctx)
-//	return resp, liberror.CoverErr(err,
-//		errors.New("service temporarily unavailable. Please try again later"),
-//		log.WithFields(log.Fields{"service": "ingredients/list", "repo": "ingredients/list"}).WithError(err))
-//}
+
+func (s Service) list(ctx context.Context, name string) (Ingredients, error) {
+	resp, err := s.repo.list(ctx, name)
+	return resp, liberror.CoverErr(err,
+		errors.New("service temporarily unavailable. Please try again later"),
+		log.WithFields(log.Fields{"service": "ingredients/list", "repo": "ingredients/list"}).WithError(err))
+}

@@ -1,23 +1,20 @@
 package ingredient
 
-//
-//import (
-//	"Food/pkg"
-//	"github.com/go-chi/chi/v5"
-//	"github.com/go-chi/render"
-//	"net/http"
-//)
-//
-//type Handler struct {
-//	svc *Service
-//}
-//
-//func NewHandler(svc *Service) *Handler {
-//	return &Handler{
-//		svc: svc,
-//	}
-//}
-//
+import (
+	"Food/pkg"
+	"net/http"
+)
+
+type Handler struct {
+	svc *Service
+}
+
+func NewHandler(svc *Service) *Handler {
+	return &Handler{
+		svc: svc,
+	}
+}
+
 //func (h Handler) add(w http.ResponseWriter, r *http.Request) {
 //
 //	var data AddRequest
@@ -38,7 +35,7 @@ package ingredient
 //		Code:    201,
 //	})
 //}
-//
+
 //func (h Handler) delete(w http.ResponseWriter, r *http.Request) {
 //
 //	id := chi.URLParam(r, "id")
@@ -95,17 +92,19 @@ package ingredient
 //		Code:    http.StatusOK,
 //	})
 //}
-//
-//func (h Handler) list(w http.ResponseWriter, r *http.Request) {
-//	ingredients, err := h.svc.list(r.Context())
-//	if err != nil {
-//		pkg.Render(w, r, err)
-//		return
-//	}
-//
-//	pkg.Render(w, r, pkg.ApiResponse{
-//		Data:    ingredients,
-//		Message: "Ingredient retrieved successfully",
-//		Code:    http.StatusOK,
-//	})
-//}
+
+func (h Handler) list(w http.ResponseWriter, r *http.Request) {
+	ingredient := r.URL.Query().Get("ingredient-name")
+
+	ingredients, err := h.svc.list(r.Context(), ingredient)
+	if err != nil {
+		pkg.Render(w, r, err)
+		return
+	}
+
+	pkg.Render(w, r, pkg.ApiResponse{
+		Data:    ingredients,
+		Message: "Ingredient retrieved successfully",
+		Code:    http.StatusOK,
+	})
+}
