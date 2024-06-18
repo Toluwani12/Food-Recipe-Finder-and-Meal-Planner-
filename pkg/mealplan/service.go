@@ -111,6 +111,14 @@ func (s *Service) callRecommendationEngine(ctx context.Context, userID uuid.UUID
 			}).WithError(err))
 	}
 
+	if len(randomRecipes) < 21 {
+		return nil, liberror.CoverErr(err,
+			errors.New("service temporarily unavailable. Please try again later"),
+			pkg.Log("mealplan.callRecommendationEngine", "mealplan.RecommendRecipes", userID.String(), log.Fields{
+				"week_start_date": weekStartDate,
+			}).WithError(err))
+	}
+
 	mealPlans := MealPlans{}
 	mealTypes := []MealType{Breakfast, Lunch, Dinner}
 	daysOfWeek := []DayOfWeek{Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday}
