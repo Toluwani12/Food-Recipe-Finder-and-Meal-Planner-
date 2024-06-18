@@ -111,7 +111,8 @@ func (s *Service) callRecommendationEngine(ctx context.Context, userID uuid.UUID
 			}).WithError(err))
 	}
 
-	if len(randomRecipes) < 21 {
+	if randomRecipes == nil || len(randomRecipes) < 21 {
+		err = errors.New("not enough recipes found to generate meal plans")
 		return nil, liberror.CoverErr(err,
 			errors.New("service temporarily unavailable. Please try again later"),
 			pkg.Log("mealplan.callRecommendationEngine", "mealplan.RecommendRecipes", userID.String(), log.Fields{
