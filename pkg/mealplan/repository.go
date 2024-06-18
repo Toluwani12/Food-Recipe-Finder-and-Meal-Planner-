@@ -39,6 +39,12 @@ func (r *Repository) save(mealPlans MealPlans) error {
 		values = append(values, mealPlan.UserID, mealPlan.DayOfWeek, mealPlan.MealType, mealPlan.RecipeID, mealPlan.WeekStartDate, mealPlan.ImageURL)
 	}
 
+	// Add the ON CONFLICT clause to handle upsert
+	query += ` ON CONFLICT (user_id, day_of_week, week_start_date) DO UPDATE 
+			   SET meal_type = EXCLUDED.meal_type, 
+			       recipe_id = EXCLUDED.recipe_id, 
+			       image_url = EXCLUDED.image_url`
+
 	// Execute the query
 	_, err := r.db.Exec(query, values...)
 	return errors.Wrap(err, "failed to save meal plans")
