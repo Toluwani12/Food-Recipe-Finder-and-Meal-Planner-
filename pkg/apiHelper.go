@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -101,3 +102,17 @@ func ApplyToQuery(query string, page, pageSize int) string {
 }
 
 type ExecContext func(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+
+func Log(service, repo, userID string, otherFields ...log.Fields) *log.Entry {
+	fields := log.Fields{
+		"service": service,
+		"repo":    repo,
+		"user_id": userID,
+	}
+	for _, f := range otherFields {
+		for k, v := range f {
+			fields[k] = v
+		}
+	}
+	return log.WithFields(fields)
+}

@@ -12,7 +12,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"net/http"
 	"net/url"
 	"strings"
 )
@@ -25,22 +25,21 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (r Repository) get(ctx context.Context, id string) (*Recipe, error) {
+func (r *Repository) get(ctx context.Context, id string) (*Recipe, error) {
 	var recipe Recipe
 
-	// Use Get to query and automatically scan the result into the struct
 	err := r.db.GetContext(ctx, &recipe, "SELECT * FROM recipes WHERE id = $1", id)
-
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, liberror.ErrNotFound
+			return nil, liberror.New("Recipe not found", http.StatusNotFound)
 		}
+		return nil, errors.Wrap(err, "db.GetContext failed")
 	}
 
-	return &recipe, errors.Wrap(err, "db.GetContext failed")
+	return &recipe, nil
 }
 
-func (r Repository) getByName(ctx context.Context, name string) (*Recipe, error) {
+func (r *Repository) getByName(ctx context.Context, name string) (*Recipe, error) {
 	var recipe Recipe
 
 	err := r.db.GetContext(ctx, &recipe, `SELECT r.name AS recipe_name, i.name AS ingredient_name, ri.quantity, alt.name AS alternative_name
@@ -49,30 +48,27 @@ func (r Repository) getByName(ctx context.Context, name string) (*Recipe, error)
 								JOIN ingredients i ON ri.ingredient_id = i.id
 								LEFT JOIN ingredient_alternatives a ON i.id = a.ingredient_id
 								LEFT JOIN ingredients alt ON a.alternative_id = alt.id
-								WHERE r.name = 'Recipe Name';`, name)
-
+								WHERE r.name = $1`, name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, liberror.ErrNotFound
+			return nil, liberror.New("Recipe not found", http.StatusNotFound)
 		}
+		return nil, errors.Wrap(err, "db.GetContext failed")
 	}
 
-	return &recipe, errors.Wrap(err, "db.GetContext failed")
+	return &recipe, nil
 }
 
-func (r Repository) processRecipesAndIngredients(ctx context.Context, recipes model.Request) (map[string]bool, error) {
-	// Start a transaction
+func (r *Repository) processRecipesAndIngredients(ctx context.Context, recipes model.Request) (map[string]bool, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "beginning transaction")
 	}
-
-	// Defer a rollback in case of an error
 	defer func() {
 		if p := recover(); p != nil || err != nil {
 			tx.Rollback()
 			if p != nil {
-				panic(p) // re-throw panic after Rollback
+				panic(p)
 			}
 		} else {
 			err = tx.Commit()
@@ -82,13 +78,11 @@ func (r Repository) processRecipesAndIngredients(ctx context.Context, recipes mo
 		}
 	}()
 
-	// Upsert recipes and get which were successfully added
 	successMap, err := r.bulkUpsertRecipes(ctx, tx, recipes)
 	if err != nil {
 		return nil, err
 	}
 
-	// Filter recipes to include only those successfully added
 	newRecipes := make(model.Request, 0)
 	for _, recipe := range recipes {
 		if success, exists := successMap[recipe.Name]; exists && success {
@@ -96,7 +90,6 @@ func (r Repository) processRecipesAndIngredients(ctx context.Context, recipes mo
 		}
 	}
 
-	// Extract all ingredient names from the new recipes only
 	ingredientNames := make([]string, 0)
 	for _, recipe := range newRecipes {
 		for _, ingredient := range recipe.Ingredients {
@@ -105,14 +98,11 @@ func (r Repository) processRecipesAndIngredients(ctx context.Context, recipes mo
 	}
 
 	if len(ingredientNames) > 0 {
-
-		// Upsert ingredients and get their IDs
 		ingredientIDs, err := r.bulkUpsertIngredients(ctx, tx, ingredientNames)
 		if err != nil {
 			return nil, err
 		}
 
-		// Link ingredients only for new recipes
 		if err = r.linkIngredients(ctx, tx, ingredientIDs, newRecipes); err != nil {
 			return nil, err
 		}
@@ -121,15 +111,12 @@ func (r Repository) processRecipesAndIngredients(ctx context.Context, recipes mo
 	return successMap, nil
 }
 
-// bulkUpsertRecipes processes a batch of recipes, inserts new ones in a batch, and reports duplicates with boolean flags.
-func (r Repository) bulkUpsertRecipes(ctx context.Context, tx *sqlx.Tx, recipes model.Request) (map[string]bool, error) {
-	// First, check for duplicates
+func (r *Repository) bulkUpsertRecipes(ctx context.Context, tx *sqlx.Tx, recipes model.Request) (map[string]bool, error) {
 	existingRecipes, err := checkForDuplicateRecipes(tx, recipes)
 	if err != nil {
 		return nil, errors.Wrap(err, "checking for duplicate recipes")
 	}
 
-	// Prepare batch insert for new recipes
 	var insertValues []string
 	var insertArgs []interface{}
 	index := 1
@@ -141,10 +128,8 @@ func (r Repository) bulkUpsertRecipes(ctx context.Context, tx *sqlx.Tx, recipes 
 		}
 	}
 
-	// Initialize results map
 	results := make(map[string]bool)
 
-	// Execute batch insert if there are new recipes to add
 	if len(insertValues) > 0 {
 		insertQuery := "INSERT INTO recipes (id, name, description, img_url, cooking_time, instructions) VALUES " +
 			strings.Join(insertValues, ", ") + " RETURNING name"
@@ -154,7 +139,6 @@ func (r Repository) bulkUpsertRecipes(ctx context.Context, tx *sqlx.Tx, recipes 
 		}
 		defer rows.Close()
 
-		// Process inserted recipes
 		for rows.Next() {
 			var name string
 			if err := rows.Scan(&name); err != nil {
@@ -168,7 +152,6 @@ func (r Repository) bulkUpsertRecipes(ctx context.Context, tx *sqlx.Tx, recipes 
 		}
 	}
 
-	// Mark duplicates as false in the results
 	for name := range existingRecipes {
 		results[name] = false
 	}
@@ -176,7 +159,6 @@ func (r Repository) bulkUpsertRecipes(ctx context.Context, tx *sqlx.Tx, recipes 
 	return results, nil
 }
 
-// checkForDuplicateRecipes checks the database for existing recipes with the same names.
 func checkForDuplicateRecipes(tx *sqlx.Tx, recipes model.Request) (map[string]string, error) {
 	names := make([]interface{}, len(recipes))
 	for i, recipe := range recipes {
@@ -211,17 +193,14 @@ func checkForDuplicateRecipes(tx *sqlx.Tx, recipes model.Request) (map[string]st
 	return existingRecipes, nil
 }
 
-func (r Repository) linkIngredients(ctx context.Context, tx *sqlx.Tx, ingredientIDs map[string]string, recipes model.Request) error {
-
+func (r *Repository) linkIngredients(ctx context.Context, tx *sqlx.Tx, ingredientIDs map[string]string, recipes model.Request) error {
 	linkValues := []string{}
 	linkArgs := []interface{}{}
 	index := 1
 
-	// Prepare insert values and arguments from the recipes and their ingredients
 	for _, recipe := range recipes {
 		for _, ingredient := range recipe.Ingredients {
 			if ingredientID, ok := ingredientIDs[ingredient.Name]; ok {
-				// Dynamically create placeholders for each ingredient link
 				linkValues = append(linkValues, fmt.Sprintf("($%d, $%d, $%d)", index, index+1, index+2))
 				linkArgs = append(linkArgs, recipe.ID, ingredientID, ingredient.Quantity)
 				index += 3
@@ -229,12 +208,9 @@ func (r Repository) linkIngredients(ctx context.Context, tx *sqlx.Tx, ingredient
 		}
 	}
 
-	// Perform the batch insert only if there are ingredients to link
 	if len(linkValues) > 0 {
 		linkQuery := "INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES " +
 			strings.Join(linkValues, ", ") + " ON CONFLICT (recipe_id, ingredient_id) DO NOTHING"
-
-		// Execute the query with all arguments
 		if _, err := tx.ExecContext(ctx, linkQuery, linkArgs...); err != nil {
 			return errors.Wrap(err, "tx.ExecContext failed for linkQuery in linkIngredients")
 		}
@@ -243,14 +219,13 @@ func (r Repository) linkIngredients(ctx context.Context, tx *sqlx.Tx, ingredient
 	return nil
 }
 
-func (r Repository) bulkUpsertIngredients(ctx context.Context, tx *sqlx.Tx, ingredientNames []string) (map[string]string, error) {
+func (r *Repository) bulkUpsertIngredients(ctx context.Context, tx *sqlx.Tx, ingredientNames []string) (map[string]string, error) {
 	if len(ingredientNames) == 0 {
 		return nil, nil
 	}
 
 	ingredientIDs := make(map[string]string)
 
-	// Step 1: Query existing ingredients to avoid duplicates
 	query, args, err := sqlx.In("SELECT id, name FROM ingredients WHERE name IN (?)", ingredientNames)
 	if err != nil {
 		return nil, errors.Wrap(err, "sqlx.In failed for querying existing ingredients")
@@ -264,8 +239,7 @@ func (r Repository) bulkUpsertIngredients(ctx context.Context, tx *sqlx.Tx, ingr
 
 	existingIngredients := make(map[string]bool)
 	for rows.Next() {
-		var id string
-		var name string
+		var id, name string
 		if err := rows.Scan(&id, &name); err != nil {
 			return nil, errors.Wrap(err, "rows.Scan failed for existing ingredients")
 		}
@@ -273,7 +247,6 @@ func (r Repository) bulkUpsertIngredients(ctx context.Context, tx *sqlx.Tx, ingr
 		existingIngredients[name] = true
 	}
 
-	// Step 2: Identify which ingredients need to be inserted
 	newIngredients := []string{}
 	for _, name := range ingredientNames {
 		if !existingIngredients[name] {
@@ -281,7 +254,6 @@ func (r Repository) bulkUpsertIngredients(ctx context.Context, tx *sqlx.Tx, ingr
 		}
 	}
 
-	// Step 3: Perform bulk insert for new ingredients
 	if len(newIngredients) > 0 {
 		values := make([]string, 0, len(newIngredients))
 		insertArgs := make([]interface{}, 0, len(newIngredients))
@@ -303,8 +275,7 @@ func (r Repository) bulkUpsertIngredients(ctx context.Context, tx *sqlx.Tx, ingr
 		defer insertRows.Close()
 
 		for insertRows.Next() {
-			var id string
-			var name string
+			var id, name string
 			if err := insertRows.Scan(&id, &name); err != nil {
 				return nil, errors.Wrap(err, "insertRows.Scan failed for new ingredients")
 			}
@@ -315,12 +286,15 @@ func (r Repository) bulkUpsertIngredients(ctx context.Context, tx *sqlx.Tx, ingr
 	return ingredientIDs, nil
 }
 
-func (r Repository) delete(ctx context.Context, id string) (string, error) {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM recipes VALUES (:id)`, id)
-	return id, errors.Wrap(err, "ExecContext")
+func (r *Repository) delete(ctx context.Context, id string) (string, error) {
+	_, err := r.db.ExecContext(ctx, `DELETE FROM recipes WHERE id = $1`, id)
+	if err != nil {
+		return id, errors.Wrap(err, "ExecContext")
+	}
+	return id, nil
 }
 
-func (r Repository) list(ctx context.Context, userID string, recipeName string) ([]ListResponse, error) {
+func (r *Repository) list(ctx context.Context, userID string, recipeName string) ([]ListResponse, error) {
 	var recipes []ListResponse
 	var query string
 	var args []interface{}
@@ -343,16 +317,24 @@ func (r Repository) list(ctx context.Context, userID string, recipeName string) 
 	}
 
 	err := r.db.SelectContext(ctx, &recipes, query, args...)
-	return recipes, errors.Wrap(err, "SelectContext")
+	if err != nil {
+		return nil, errors.Wrap(err, "SelectContext")
+	}
+	return recipes, nil
 }
 
-func (r Repository) update(ctx context.Context, data Recipe) (*Recipe, error) {
+func (r *Repository) update(ctx context.Context, data Recipe) (*Recipe, error) {
 	res, err := r.db.ExecContext(ctx, "UPDATE recipes SET name = $1, cooking_time = $2, instructions = $3, updated_at = $4 WHERE id = $5", data.Name, data.CookingTime, data.Instructions, data.UpdatedAt, data.Id)
-	if count, err := res.RowsAffected(); count != 1 {
+	if err != nil {
+		return nil, errors.Wrap(err, "ExecContext failed")
+	}
+	if count, err := res.RowsAffected(); err != nil {
 		return nil, errors.Wrap(err, "RowsAffected")
+	} else if count != 1 {
+		return nil, errors.New("no rows affected")
 	}
 
-	return &data, errors.Wrap(err, "Db.NamedExecContext")
+	return &data, nil
 }
 
 type Ingredient struct {
@@ -402,7 +384,6 @@ func (r *Repository) search(ctx context.Context, ingredients []string, queryPara
 		return r.getIngredientsForRecipes(ctx, matches, pagination)
 	}
 
-	// Call get_closest_recipe function and fetch full recipe details in one query with pagination
 	matches, pagination, err := r.getClosestRecipeWithDetails(ctx, ingredients, userID, page, pageSize)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "get closest recipe with details failed")
@@ -420,7 +401,10 @@ func (r *Repository) findAllRecipes(ctx context.Context, queryParams url.Values,
 			FROM recipes r
 			ORDER BY r.name`
 		err := r.db.SelectContext(ctx, &recipes, query)
-		return recipes, nil, errors.Wrap(err, "db.SelectContext failed")
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "db.SelectContext failed")
+		}
+		return recipes, nil, nil
 	}
 
 	var totalItems int
@@ -456,12 +440,8 @@ func (r *Repository) findAllRecipes(ctx context.Context, queryParams url.Values,
 }
 
 func (r *Repository) getClosestRecipeWithDetails(ctx context.Context, ingredients []string, userID string, page, pageSize int) ([]ResponseData, *pkg.Pagination, error) {
-	// Prepare the user ingredients array for the SQL function
 	ingredientsArray := pq.Array(ingredients)
 
-	log.Printf("Ingredients array: %v", ingredientsArray)
-
-	// Query to count total items
 	var totalItems int
 	countQuery := `
     SELECT COUNT(*)
@@ -472,7 +452,6 @@ func (r *Repository) getClosestRecipeWithDetails(ctx context.Context, ingredient
 		return nil, nil, errors.Wrap(err, "db.GetContext failed")
 	}
 
-	// Base query for fetching closest recipe details with pagination
 	query := `
     WITH closest_recipes AS (
         SELECT recipe_id, similarity_score
@@ -495,7 +474,6 @@ func (r *Repository) getClosestRecipeWithDetails(ctx context.Context, ingredient
 		joinQuery = "LEFT JOIN (SELECT recipe_id, true AS liked FROM likes WHERE user_id = $4) l ON r.id = l.recipe_id"
 	}
 
-	// Final query with dynamic parts for liked and join
 	finalQuery := fmt.Sprintf(query, likedQuery, joinQuery)
 
 	var recipes []ResponseData
@@ -509,7 +487,6 @@ func (r *Repository) getClosestRecipeWithDetails(ctx context.Context, ingredient
 	}
 
 	pagination := pkg.NewPagination(page, pageSize, totalItems)
-
 	return recipes, pagination, nil
 }
 
@@ -555,7 +532,14 @@ func (r *Repository) fetchIngredients(ctx context.Context, recipeIDs []uuid.UUID
 		JOIN ingredients i ON ri.ingredient_id = i.id
 		WHERE ri.recipe_id = ANY($1)`
 	err := r.db.SelectContext(ctx, &ingredientsData, query, pq.Array(recipeIDs))
-	return ingredientsData, err
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, liberror.New("No ingredients found for the specified recipes", http.StatusNotFound)
+		}
+		return nil, errors.Wrap(err, "fetchIngredients: db.SelectContext failed")
+	}
+
+	return ingredientsData, nil
 }
 
 func mapIngredientsToRecipes(recipes []ResponseData, ingredientsData []struct {
@@ -587,7 +571,7 @@ func (r *Repository) fetchLikes(ctx context.Context, recipeIDs []uuid.UUID) ([]s
         FROM likes
         WHERE recipe_id IN (?)`, recipeIDs)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "sqlx.In failed for fetching likes")
 	}
 
 	query = r.db.Rebind(query)
@@ -599,7 +583,10 @@ func (r *Repository) fetchLikes(ctx context.Context, recipeIDs []uuid.UUID) ([]s
 
 	err = r.db.SelectContext(ctx, &results, query, args...)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, liberror.New("No likes found for the specified recipes", http.StatusNotFound)
+		}
+		return nil, errors.Wrap(err, "fetchLikes: db.SelectContext failed")
 	}
 
 	return results, nil

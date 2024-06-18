@@ -1,13 +1,16 @@
 package mealplan
 
 import (
+	liberror "Food/internal/errors"
 	"Food/pkg/recipe"
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
+	"net/http"
 	"time"
 )
 
@@ -19,7 +22,7 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) save(mealPlans MealPlans) error {
+func (r *Repository) save(ctx context.Context, mealPlans MealPlans) error {
 	if len(mealPlans) == 0 {
 		return nil
 	}
@@ -46,8 +49,11 @@ func (r *Repository) save(mealPlans MealPlans) error {
 			       image_url = EXCLUDED.image_url`
 
 	// Execute the query
-	_, err := r.db.Exec(query, values...)
-	return errors.Wrap(err, "failed to save meal plans")
+	_, err := r.db.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "ExecContext: failed to save meal plans")
+	}
+	return nil
 }
 
 type Ingredient struct {
@@ -88,8 +94,13 @@ func (r *Repository) GetMealPlansForDay(userID string, dayOfWeek DayOfWeek, week
 		JOIN recipes r ON mp.recipe_id = r.id
 		WHERE mp.user_id = $1 AND mp.day_of_week = $2 AND mp.week_start_date = $3`
 	err := r.db.Select(&recipes, query, userID, dayOfWeek, weekStartDate)
-
-	return recipes, errors.Wrap(err, "failed to get meal plans for day")
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, liberror.New("No meal plans found for the specified day", http.StatusNotFound)
+		}
+		return nil, errors.Wrap(err, "Select: failed to get meal plans for day")
+	}
+	return recipes, nil
 }
 
 func (r *Repository) GetIngredientsForRecipes(recipeIDs []uuid.UUID) (map[uuid.UUID]Ingredients, error) {
@@ -106,7 +117,10 @@ func (r *Repository) GetIngredientsForRecipes(recipeIDs []uuid.UUID) (map[uuid.U
 		WHERE ri.recipe_id = ANY($1)`
 	err := r.db.Select(&ingredientsData, query, pq.Array(recipeIDs))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get ingredients for recipes")
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, liberror.New("No ingredients found for the specified recipes", http.StatusNotFound)
+		}
+		return nil, errors.Wrap(err, "Select: failed to get ingredients for recipes")
 	}
 
 	// Map the ingredients by recipe ID
@@ -129,7 +143,13 @@ func (r *Repository) GetMealPlanPlaceholders(userID string, weekStartDate time.T
         WHERE user_id = $1 AND week_start_date = $2
         ORDER BY day_of_week`
 	err := r.db.Select(&placeholders, query, userID, weekStartDate)
-	return placeholders, errors.Wrap(err, "failed to get meal plan placeholders")
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, liberror.New("No meal plan placeholders found for the specified week", http.StatusNotFound)
+		}
+		return nil, errors.Wrap(err, "Select: failed to get meal plan placeholders")
+	}
+	return placeholders, nil
 }
 
 func (r *Repository) RecommendRecipes(ctx context.Context, userID uuid.UUID, limit int) ([]recipe.Recipe, error) {
@@ -158,19 +178,11 @@ func (r *Repository) RecommendRecipes(ctx context.Context, userID uuid.UUID, lim
 
 	err := r.db.SelectContext(ctx, &recipes, query, userID, limit)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to recommend recipes")
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, liberror.New("No recommended recipes found", http.StatusNotFound)
+		}
+		return nil, errors.Wrap(err, "SelectContext: failed to recommend recipes")
 	}
 
 	return recipes, nil
-}
-
-func (r *Repository) CheckMealPlanExists(userID string, weekStartDate time.Time) (bool, error) {
-	var count int
-	query := `
-		SELECT COUNT(*)
-		FROM meal_plans
-		WHERE user_id = $1 AND week_start_date = $2`
-	err := r.db.Get(&count, query, userID, weekStartDate)
-
-	return count > 0, errors.Wrap(err, "failed to check if meal plan exists")
 }

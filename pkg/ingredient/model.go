@@ -9,8 +9,8 @@ import (
 type Ingredient struct {
 	ID        string    `json:"id" db:"id"`
 	Name      string    `json:"name" db:"name"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+	CreatedAt time.Time `json:"created_at,omitempty" db:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty" db:"updated_at,omitempty"`
 }
 
 type Ingredients []Ingredient

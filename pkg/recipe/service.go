@@ -29,7 +29,8 @@ func (s Service) crawl(ctx context.Context) (map[string]bool, error) {
 	for _, c := range s.crawlerList {
 		data, err := c.CrawlRecipe()
 		if err != nil {
-			log.WithFields(log.Fields{"service": "recipes/fetchAndSaveRecipes", "crawler": c}).WithError(err)
+			log.WithFields(log.Fields{"service": "recipes/fetchAndSaveRecipes", "crawler": c}).WithError(err).Error("Failed to crawl recipe")
+			continue
 		}
 		recipeList = append(recipeList, *data...)
 	}
@@ -39,9 +40,7 @@ func (s Service) crawl(ctx context.Context) (map[string]bool, error) {
 	return s.save(ctx, req)
 }
 
-// AddRecipes adds a list of new recipes along with their ingredients to the database.
 func (s Service) save(ctx context.Context, recipes model.Request) (map[string]bool, error) {
-
 	dupl := make(map[string]bool)
 	var uniqueRecipes []model.RequestData
 	for _, recipe := range recipes {
@@ -52,58 +51,41 @@ func (s Service) save(ctx context.Context, recipes model.Request) (map[string]bo
 	}
 
 	recipes = uniqueRecipes
-	// Ensure all IDs are set for recipes, ingredients, and their alternatives
 	for i := range recipes {
 		if recipes[i].ID == uuid.Nil {
-			recipes[i].ID = uuid.New() // Ensure the recipe has a UUID
+			recipes[i].ID = uuid.New()
 		}
 	}
 	successMap, err := s.repo.processRecipesAndIngredients(ctx, recipes)
 	return successMap, liberror.CoverErr(err,
 		errors.New("service temporarily unavailable. Please try again later"),
-		log.WithFields(log.Fields{"service": "recipes/add",
-			"repo": "recipes/add",
-		}).WithError(err))
+		pkg.Log("recipes.save", "recipe.processRecipesAndIngredients", "").WithError(err))
 }
-
-//func (s Service) update(ctx context.Context, id string, data AddRequest) (*Recipe, error) {
-//	recipe := Recipe{
-//		Id:           id,
-//		Name:         data.Name,
-//		CookingTime:  data.CookingTime,
-//		Instructions: data.Instructions,
-//		UpdatedAt:    time.Now(),
-//	}
-//	resp, err := s.repo.update(ctx, recipe)
-//	return resp, liberror.CoverErr(err,
-//		errors.New("service temporarily unavailable. Please try again later"),
-//		log.WithFields(log.Fields{"service": "recipes/update", "repo": "recipes/update"}).WithError(err))
-//}
 
 func (s Service) delete(ctx context.Context, id string) (string, error) {
 	resp, err := s.repo.delete(ctx, id)
 	return resp, liberror.CoverErr(err,
 		errors.New("service temporarily unavailable. Please try again later"),
-		log.WithFields(log.Fields{"service": "recipes/delete", "repo": "recipes/delete"}).WithError(err))
+		pkg.Log("recipes.delete", "recipe.delete", id).WithError(err))
 }
 
 func (s Service) get(ctx context.Context, id string) (*Recipe, error) {
 	resp, err := s.repo.get(ctx, id)
 	return resp, liberror.CoverErr(err,
 		errors.New("service temporarily unavailable. Please try again later"),
-		log.WithFields(log.Fields{"service": "recipes/get", "repo": "recipes/get"}).WithError(err))
+		pkg.Log("recipes.get", "recipe.get", id).WithError(err))
 }
 
 func (s Service) list(ctx context.Context, userID string, recipeName string) ([]ListResponse, error) {
 	resp, err := s.repo.list(ctx, userID, recipeName)
 	return resp, liberror.CoverErr(err,
 		errors.New("service temporarily unavailable. Please try again later"),
-		log.WithFields(log.Fields{"service": "recipes/list", "repo": "recipes/list"}).WithError(err))
+		pkg.Log("recipes.list", "recipe.list", "").WithError(err))
 }
 
-func (s Service) search(ctx context.Context, ingredients []string, queryParams url.Values, userId string) ([]ResponseData, *pkg.Pagination, error) {
-	recipes, pg, err := s.repo.search(ctx, ingredients, queryParams, userId)
+func (s Service) search(ctx context.Context, ingredients []string, queryParams url.Values, userID string) ([]ResponseData, *pkg.Pagination, error) {
+	recipes, pg, err := s.repo.search(ctx, ingredients, queryParams, userID)
 	return recipes, pg, liberror.CoverErr(err,
 		errors.New("service temporarily unavailable. Please try again later"),
-		log.WithFields(log.Fields{"service": "recipes/findRecipes", "repo": "recipes/findRecipes"}).WithError(err))
+		pkg.Log("recipes.search", "recipe.search", "").WithError(err))
 }

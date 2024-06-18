@@ -2,9 +2,9 @@ package user_preference
 
 import (
 	liberror "Food/internal/errors"
+	"Food/pkg"
 	"context"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 type Service struct {
@@ -15,30 +15,23 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
-//func (s *Service) save(ctx context.Context, userID string, req AddRequest) error {
-//
-//	return s.repo.add(ctx, s.repo.db.ExecContext, userID, req.RecipeIds)
-//}
-//
-//func (s *Service) delete(ctx context.Context, userID string, req AddRequest) error {
-//	return s.repo.remove(ctx, s.repo.db.ExecContext, userID, req.RecipeIds)
-//}
-
 func (s *Service) Save(ctx context.Context, userID string, req AddRequest, liked bool) error {
-	return s.repo.setLikeStatus(ctx, userID, req.RecipeIds, liked)
+	err := s.repo.setLikeStatus(ctx, userID, req.RecipeIds, liked)
+	return liberror.CoverErr(err,
+		errors.New("service temporarily unavailable. Please try again later"),
+		pkg.Log("user_preference.Save", "user_preference.setLikeStatus", userID).WithError(err))
 }
 
-//
-//func (s *Service) delete(ctx context.Context, userID string, req AddRequest) error {
-//	return s.repo.remove(ctx, s.repo.db.ExecContext, userID, req.RecipeIds)
-//}
-
-func (s *Service) get(ctx context.Context, id string) (*UserPreference, error) {
-	u, err := s.repo.get(ctx, id)
-	return &UserPreference{
-			UserID:       id,
-			LikedRecipes: u,
-		}, liberror.CoverErr(err,
+func (s *Service) Get(ctx context.Context, userID string) (*UserPreference, error) {
+	recipes, err := s.repo.get(ctx, userID)
+	if err != nil {
+		return nil, liberror.CoverErr(err,
 			errors.New("service temporarily unavailable. Please try again later"),
-			log.WithFields(log.Fields{"service": "users/findByEmail", "repo": "users/findByEmail"}).WithError(err))
+			pkg.Log("user_preference.Get", "user_preference.get", userID).WithError(err))
+	}
+
+	return &UserPreference{
+		UserID:       userID,
+		LikedRecipes: recipes,
+	}, nil
 }

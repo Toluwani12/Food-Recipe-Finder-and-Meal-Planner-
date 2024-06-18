@@ -3,6 +3,7 @@ package model
 import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
@@ -27,6 +28,8 @@ type RequestData struct {
 type Request []RequestData
 
 func (v *Request) Bind(r *http.Request) error {
+
+	log.Printf("Binding recipe request: %v", v)
 
 	//err1 := validate.Validate(
 	//	&validators.StringIsPresent{Name: "name", Field: v.Name, Message: fmt.Sprintf("%s is missing", "name")},

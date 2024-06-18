@@ -1,11 +1,14 @@
 package user_preference
 
 import (
+	liberror "Food/internal/errors"
 	"context"
+	"database/sql"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
+	"net/http"
 )
 
 type Repository struct {
@@ -28,7 +31,10 @@ func (r *Repository) get(ctx context.Context, userID string) ([]Recipe, error) {
 		) as recipe_id ON r.id = recipe_id`
 	err := r.db.SelectContext(ctx, &recipes, query, userID)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, liberror.New("No recipes found for the specified user", http.StatusNotFound)
+		}
+		return nil, errors.Wrap(err, "SelectContext: failed to get recipes for user")
 	}
 
 	return recipes, nil
@@ -44,7 +50,7 @@ func (r *Repository) add(ctx context.Context, tx *sqlx.Tx, userID string, recipe
         WHERE user_id = $2`
 	_, err := tx.ExecContext(ctx, query, pq.Array(recipeIDs), userID)
 	if err != nil {
-		return errors.Wrap(err, "exec failed")
+		return errors.Wrap(err, "ExecContext: failed to add recipes to user preferences")
 	}
 	return nil
 }
@@ -63,7 +69,7 @@ func (r *Repository) remove(ctx context.Context, tx *sqlx.Tx, userID string, rec
         WHERE user_id = $2`
 	_, err := tx.ExecContext(ctx, query, pq.Array(recipeIDs), userID)
 	if err != nil {
-		return errors.Wrap(err, "exec failed")
+		return errors.Wrap(err, "ExecContext: failed to remove recipes from user preferences")
 	}
 	return nil
 }
@@ -71,7 +77,7 @@ func (r *Repository) remove(ctx context.Context, tx *sqlx.Tx, userID string, rec
 func (r *Repository) setLikeStatus(ctx context.Context, userID string, recipeIDs []string, like bool) error {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "BeginTxx: failed to begin transaction")
 	}
 
 	defer func() {
@@ -91,29 +97,25 @@ func (r *Repository) setLikeStatus(ctx context.Context, userID string, recipeIDs
 	}
 
 	if like {
-		//Like the recipe
 		_, err = tx.ExecContext(ctx, `
 			INSERT INTO likes (user_id, recipe_id)
 			SELECT $1, unnest($2::uuid[])
 			ON CONFLICT DO NOTHING`, userID, pq.Array(recipeUUIDs))
 		if err != nil {
-			return err
+			return errors.Wrap(err, "ExecContext: failed to like recipes")
 		}
 
-		// Add recipe ID to user preferences
 		err = r.add(ctx, tx, userID, recipeUUIDs)
 		if err != nil {
 			return err
 		}
 	} else {
-		// Unlike the recipe
 		_, err = tx.ExecContext(ctx, `
 			DELETE FROM likes WHERE user_id = $1 AND recipe_id = ANY($2::uuid[])`, userID, pq.Array(recipeUUIDs))
 		if err != nil {
-			return err
+			return errors.Wrap(err, "ExecContext: failed to unlike recipes")
 		}
 
-		// Remove recipe ID from user preferences
 		err = r.remove(ctx, tx, userID, recipeUUIDs)
 		if err != nil {
 			return err

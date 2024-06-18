@@ -1,9 +1,8 @@
 package mealplan
 
 import (
-	"Food/internal/errors"
+	liberror "Food/internal/errors"
 	"Food/pkg"
-	"encoding/json"
 	"github.com/google/uuid"
 	"net/http"
 	"time"
@@ -20,7 +19,6 @@ func NewHandler(svc *Service) *Handler {
 }
 
 func (h *Handler) generate(w http.ResponseWriter, r *http.Request) {
-
 	userID := r.Context().Value("user_id").(string)
 	weekStartDate := getStartOfWeek()
 
@@ -32,17 +30,16 @@ func (h *Handler) generate(w http.ResponseWriter, r *http.Request) {
 
 	pkg.Render(w, r, pkg.ApiResponse{
 		Data:    placeholders,
-		Message: "Meal plans generated successfully",
+		Message: "Meal plans have been successfully generated for the week.",
 		Code:    http.StatusOK,
 	})
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
-
 	userID := r.Context().Value("user_id").(string)
 	weekStartDate := getStartOfWeek()
 
-	placeholders, err := h.svc.getMealPLan(userID, weekStartDate)
+	placeholders, err := h.svc.getMealPlan(userID, weekStartDate)
 	if err != nil {
 		pkg.Render(w, r, err)
 		return
@@ -50,7 +47,7 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 
 	pkg.Render(w, r, pkg.ApiResponse{
 		Data:    placeholders,
-		Message: "Meal plans generated successfully",
+		Message: "Retrieved the meal plans for the current week successfully.",
 		Code:    http.StatusOK,
 	})
 }
@@ -69,7 +66,7 @@ func (h *Handler) GetMealPlansForDay(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("user_id").(string)
 	dayOfWeekStr := r.URL.Query().Get("day_of_week")
 	if dayOfWeekStr == "" {
-		pkg.Render(w, r, errors.New("day_of_week query parameter is required", http.StatusBadRequest))
+		pkg.Render(w, r, liberror.New("Please provide the 'day_of_week' parameter to get meal plans for a specific day.", http.StatusBadRequest))
 		return
 	}
 	dayOfWeek := DayOfWeek(dayOfWeekStr)
@@ -81,6 +78,9 @@ func (h *Handler) GetMealPlansForDay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(mealPlans)
+	pkg.Render(w, r, pkg.ApiResponse{
+		Data:    mealPlans,
+		Message: "Meal plans for the specified day have been retrieved successfully.",
+		Code:    http.StatusOK,
+	})
 }

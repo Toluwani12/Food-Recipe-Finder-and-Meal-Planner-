@@ -1,9 +1,12 @@
 package ingredient
 
 import (
+	liberror "Food/internal/errors"
 	"context"
+	"database/sql"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"net/http"
 )
 
 type Repository struct {
@@ -75,13 +78,24 @@ func NewRepository(db *sqlx.DB) *Repository {
 //	return &data, errors.Wrap(err, "Db.NamedExecContext")
 //}
 
-func (r Repository) list(ctx context.Context, searchTerm string) ([]Ingredient, error) {
-	var ingredients []Ingredient
+type listResp struct {
+	ID   string `json:"id" db:"id"`
+	Name string `json:"name" db:"name"`
+}
+
+func (r Repository) list(ctx context.Context, searchTerm string) ([]listResp, error) {
+	var ingredients []listResp
 	query := `
-        SELECT * FROM ingredients 
+        SELECT id, name FROM ingredients 
         WHERE name ILIKE $1
     `
 	err := r.db.SelectContext(ctx, &ingredients, query, "%"+searchTerm+"%")
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, liberror.New("No ingredients found with the specified search term", http.StatusNotFound)
+		}
+		return nil, errors.Wrap(err, "SelectContext: failed to list ingredients")
+	}
 
-	return ingredients, errors.Wrap(err, "SelectContext")
+	return ingredients, nil
 }

@@ -32,8 +32,8 @@ func (h Handler) save(w http.ResponseWriter, r *http.Request) {
 
 	pkg.Render(w, r, pkg.ApiResponse{
 		Data:    user.Response(),
-		Message: "users registered successfully",
-		Code:    201,
+		Message: "User registered successfully",
+		Code:    http.StatusCreated,
 	})
 }
 
@@ -44,7 +44,7 @@ func (h Handler) login(w http.ResponseWriter, r *http.Request) {
 		pkg.Render(w, r, err)
 		return
 	}
-	user, s, err := h.svc.login(r.Context(), loginReq)
+	user, token, err := h.svc.login(r.Context(), loginReq)
 	if err != nil {
 		pkg.Render(w, r, err)
 		return
@@ -54,28 +54,25 @@ func (h Handler) login(w http.ResponseWriter, r *http.Request) {
 		Data: struct {
 			User  UserResponse `json:"user"`
 			Token string       `json:"token"`
-		}{User: user.Response(), Token: s},
-		Message: "users registered successfully",
-		Code:    200,
+		}{User: user.Response(), Token: token},
+		Message: "User logged in successfully",
+		Code:    http.StatusOK,
 	})
-
 }
 
 func (h Handler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	delId, err := h.svc.delete(r.Context(), id)
 	if err != nil {
-		pkg.Render(w, r, nil)
+		pkg.Render(w, r, err)
 		return
 	}
 
-	// return a success response to users
 	pkg.Render(w, r, pkg.ApiResponse{
 		Data:    delId,
-		Message: "users successfully deleted",
-		Code:    200,
+		Message: "User successfully deleted",
+		Code:    http.StatusOK,
 	})
-
 }
 
 func (h Handler) get(w http.ResponseWriter, r *http.Request) {
@@ -88,8 +85,8 @@ func (h Handler) get(w http.ResponseWriter, r *http.Request) {
 
 	pkg.Render(w, r, pkg.ApiResponse{
 		Data:    user.Response(),
-		Message: "users retrieved successfully",
-		Code:    200,
+		Message: "User retrieved successfully",
+		Code:    http.StatusOK,
 	})
 }
 
@@ -102,8 +99,8 @@ func (h Handler) list(w http.ResponseWriter, r *http.Request) {
 
 	pkg.Render(w, r, pkg.ApiResponse{
 		Data:    users.Response(),
-		Message: "users retrieved successfully",
-		Code:    200,
+		Message: "Users retrieved successfully",
+		Code:    http.StatusOK,
 	})
 }
 
@@ -123,7 +120,7 @@ func (h Handler) update(w http.ResponseWriter, r *http.Request) {
 
 	pkg.Render(w, r, pkg.ApiResponse{
 		Data:    uId,
-		Message: "users updated successfully",
-		Code:    200,
+		Message: "User updated successfully",
+		Code:    http.StatusOK,
 	})
 }

@@ -104,7 +104,7 @@ func (h Handler) list(w http.ResponseWriter, r *http.Request) {
 
 	pkg.Render(w, r, pkg.ApiResponse{
 		Data:    ingredients,
-		Message: "Ingredient retrieved successfully",
+		Message: "Ingredients retrieved successfully",
 		Code:    http.StatusOK,
 	})
 }
