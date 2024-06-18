@@ -43,17 +43,13 @@ func (r *Repository) save(ctx context.Context, mealPlans MealPlans) error {
 	}
 
 	// Add the ON CONFLICT clause to handle upsert
-	query += ` ON CONFLICT (user_id, day_of_week, week_start_date) DO UPDATE 
-			   SET meal_type = EXCLUDED.meal_type, 
-			       recipe_id = EXCLUDED.recipe_id, 
+	query += ` ON CONFLICT (user_id, day_of_week, week_start_date, meal_type) DO UPDATE 
+			   SET recipe_id = EXCLUDED.recipe_id, 
 			       image_url = EXCLUDED.image_url`
 
 	// Execute the query
 	_, err := r.db.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "ExecContext: failed to save meal plans")
-	}
-	return nil
+	return errors.Wrap(err, "ExecContext: failed to save meal plans")
 }
 
 type Ingredient struct {
