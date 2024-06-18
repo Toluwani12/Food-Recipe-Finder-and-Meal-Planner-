@@ -1,2 +1,0 @@
-ALTER TABLE meal_plans
-DROP CONSTRAINT unique_user_day_weekstart_mealtype;

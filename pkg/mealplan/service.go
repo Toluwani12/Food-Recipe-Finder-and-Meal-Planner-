@@ -4,6 +4,7 @@ import (
 	liberror "Food/internal/errors"
 	"Food/pkg"
 	"context"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -77,6 +78,15 @@ func (s *Service) GetMealPlansForDay(userID string, dayOfWeek DayOfWeek, weekSta
 			}).WithError(err))
 	}
 
+	if len(recipes) != 3 {
+		return nil, liberror.CoverErr(fmt.Errorf("expected 3 recipes, got %d", len(recipes)),
+			errors.New("service temporarily unavailable. Please try again later"),
+			pkg.Log("mealplan.GetMealPlansForDay", "mealplan.GetMealPlansForDay", userID, log.Fields{
+				"day_of_week":     dayOfWeek,
+				"week_start_date": weekStartDate,
+			}).WithError(err))
+	}
+
 	var recipeIDs []uuid.UUID
 	for _, recipe := range recipes {
 		recipeIDs = append(recipeIDs, recipe.ID)
@@ -111,9 +121,8 @@ func (s *Service) callRecommendationEngine(ctx context.Context, userID uuid.UUID
 			}).WithError(err))
 	}
 
-	if randomRecipes == nil || len(randomRecipes) < 21 {
-		err = errors.New("not enough recipes found to generate meal plans")
-		return nil, liberror.CoverErr(err,
+	if randomRecipes == nil || len(randomRecipes) != 21 {
+		return nil, liberror.CoverErr(fmt.Errorf("expected 21 recipes, got %d", len(randomRecipes)),
 			errors.New("service temporarily unavailable. Please try again later"),
 			pkg.Log("mealplan.callRecommendationEngine", "mealplan.RecommendRecipes", userID.String(), log.Fields{
 				"week_start_date": weekStartDate,
