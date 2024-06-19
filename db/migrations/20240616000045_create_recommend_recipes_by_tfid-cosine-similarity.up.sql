@@ -1,4 +1,4 @@
--- Compute TF-IDF for ingredients and description words
+-- Compute TF-IDF for ingredients, description words, and new features
 CREATE OR REPLACE FUNCTION compute_recipe_tfidf()
 RETURNS TABLE (
     recipe_id UUID,
@@ -21,6 +21,48 @@ RETURN QUERY
             recipes r
             JOIN recipe_ingredients ri ON r.id = ri.recipe_id
             JOIN ingredients i ON ri.ingredient_id = i.id
+        UNION ALL
+        SELECT
+            r.id AS recipe_id,
+            lower(rd.meal_type) AS term
+        FROM
+            recipes r
+            JOIN recipe_details rd ON r.id = rd.recipe_id
+        UNION ALL
+        SELECT
+            r.id AS recipe_id,
+            lower(rd.food_class) AS term
+        FROM
+            recipes r
+            JOIN recipe_details rd ON r.id = rd.recipe_id
+        UNION ALL
+        SELECT
+            r.id AS recipe_id,
+            lower(rd.region) AS term
+        FROM
+            recipes r
+            JOIN recipe_details rd ON r.id = rd.recipe_id
+        UNION ALL
+        SELECT
+            r.id AS recipe_id,
+            lower(rd.spiciness_level) AS term
+        FROM
+            recipes r
+            JOIN recipe_details rd ON r.id = rd.recipe_id
+        UNION ALL
+        SELECT
+            r.id AS recipe_id,
+            unnest(string_to_array(lower(rd.main_ingredients), ', ')) AS term
+        FROM
+            recipes r
+            JOIN recipe_details rd ON r.id = rd.recipe_id
+        UNION ALL
+        SELECT
+            r.id AS recipe_id,
+            lower(rd.cooking_method) AS term
+        FROM
+            recipes r
+            JOIN recipe_details rd ON r.id = rd.recipe_id
     ),
     tf AS (
         SELECT
@@ -91,8 +133,8 @@ END IF;
 END;
 $$ LANGUAGE plpgsql;
 
--- Recommend recipes based on cosine similarity
-CREATE OR REPLACE FUNCTION recommend_recipes(p_user_id UUID, p_limit INT)
+-- Recommend recipes based on cosine similarity and meal type
+CREATE OR REPLACE FUNCTION recommend_recipes(p_user_id UUID, p_limit INT, p_meal_type TEXT)
 RETURNS TABLE (
     recipe_id UUID,
     similarity FLOAT
@@ -117,16 +159,26 @@ RETURN QUERY
             JOIN recipe_vectors rv2 ON rv1.recipe_id <> rv2.recipe_id
         GROUP BY
             rv2.recipe_id
+    ),
+    filtered_recipes AS (
+        SELECT
+            cr.recipe_id,
+            cr.similarity
+        FROM
+            candidate_recipes cr
+            JOIN recipe_details rd ON cr.recipe_id = rd.recipe_id
+        WHERE
+            rd.meal_type = p_meal_type
     )
 SELECT
-    cr.recipe_id,
-    cr.similarity
+    fr.recipe_id,
+    fr.similarity
 FROM
-    candidate_recipes cr
+    filtered_recipes fr
 WHERE
-    cr.similarity IS NOT NULL
+    fr.similarity IS NOT NULL
 ORDER BY
-    cr.similarity DESC
+    fr.similarity DESC
     LIMIT p_limit;
 END;
 $$ LANGUAGE plpgsql;

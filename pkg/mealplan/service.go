@@ -3,6 +3,7 @@ package mealplan
 import (
 	liberror "Food/internal/errors"
 	"Food/pkg"
+	"Food/pkg/recipe"
 	"context"
 	"fmt"
 	"github.com/google/uuid"
@@ -112,7 +113,12 @@ func (s *Service) GetMealPlansForDay(userID string, dayOfWeek DayOfWeek, weekSta
 }
 
 func (s *Service) callRecommendationEngine(ctx context.Context, userID uuid.UUID, weekStartDate time.Time) (MealPlans, error) {
-	randomRecipes, err := s.repo.RecommendRecipes(ctx, userID, 21)
+	// Function to recommend recipes based on meal type
+	recommendByMealType := func(mealType string, limit int) ([]recipe.Recipe, error) {
+		return s.repo.RecommendRecipes(ctx, userID, limit, mealType)
+	}
+
+	breakfastRecipes, err := recommendByMealType("Breakfast", 7)
 	if err != nil {
 		return nil, liberror.CoverErr(err,
 			errors.New("service temporarily unavailable. Please try again later"),
@@ -121,8 +127,27 @@ func (s *Service) callRecommendationEngine(ctx context.Context, userID uuid.UUID
 			}).WithError(err))
 	}
 
-	if randomRecipes == nil || len(randomRecipes) != 21 {
-		return nil, liberror.CoverErr(fmt.Errorf("expected 21 recipes, got %d", len(randomRecipes)),
+	lunchRecipes, err := recommendByMealType("Lunch", 7)
+	if err != nil {
+		return nil, liberror.CoverErr(err,
+			errors.New("service temporarily unavailable. Please try again later"),
+			pkg.Log("mealplan.callRecommendationEngine", "mealplan.RecommendRecipes", userID.String(), log.Fields{
+				"week_start_date": weekStartDate,
+			}).WithError(err))
+	}
+
+	dinnerRecipes, err := recommendByMealType("Dinner", 7)
+	if err != nil {
+		return nil, liberror.CoverErr(err,
+			errors.New("service temporarily unavailable. Please try again later"),
+			pkg.Log("mealplan.callRecommendationEngine", "mealplan.RecommendRecipes", userID.String(), log.Fields{
+				"week_start_date": weekStartDate,
+			}).WithError(err))
+	}
+
+	// Ensure we have exactly 7 recipes for each meal type
+	if len(breakfastRecipes) != 7 || len(lunchRecipes) != 7 || len(dinnerRecipes) != 7 {
+		return nil, liberror.CoverErr(fmt.Errorf("expected 7 recipes for each meal type, got %d breakfast, %d lunch, %d dinner", len(breakfastRecipes), len(lunchRecipes), len(dinnerRecipes)),
 			errors.New("service temporarily unavailable. Please try again later"),
 			pkg.Log("mealplan.callRecommendationEngine", "mealplan.RecommendRecipes", userID.String(), log.Fields{
 				"week_start_date": weekStartDate,
@@ -130,21 +155,35 @@ func (s *Service) callRecommendationEngine(ctx context.Context, userID uuid.UUID
 	}
 
 	mealPlans := MealPlans{}
-	mealTypes := []MealType{Breakfast, Lunch, Dinner}
 	daysOfWeek := []DayOfWeek{Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday}
 
 	for i, day := range daysOfWeek {
-		for j, mealType := range mealTypes {
-			recipeIndex := i*3 + j
-			mealPlans = append(mealPlans, MealPlan{
-				UserID:        userID.String(),
-				DayOfWeek:     day,
-				MealType:      mealType,
-				RecipeID:      randomRecipes[recipeIndex].Id,
-				WeekStartDate: weekStartDate,
-				ImageURL:      randomRecipes[recipeIndex].ImgUrl,
-			})
-		}
+		mealPlans = append(mealPlans, MealPlan{
+			UserID:        userID.String(),
+			DayOfWeek:     day,
+			MealType:      Breakfast,
+			RecipeID:      breakfastRecipes[i].Id,
+			WeekStartDate: weekStartDate,
+			ImageURL:      breakfastRecipes[i].ImgUrl,
+		})
+
+		mealPlans = append(mealPlans, MealPlan{
+			UserID:        userID.String(),
+			DayOfWeek:     day,
+			MealType:      Lunch,
+			RecipeID:      lunchRecipes[i].Id,
+			WeekStartDate: weekStartDate,
+			ImageURL:      lunchRecipes[i].ImgUrl,
+		})
+
+		mealPlans = append(mealPlans, MealPlan{
+			UserID:        userID.String(),
+			DayOfWeek:     day,
+			MealType:      Dinner,
+			RecipeID:      dinnerRecipes[i].Id,
+			WeekStartDate: weekStartDate,
+			ImageURL:      dinnerRecipes[i].ImgUrl,
+		})
 	}
 
 	return mealPlans, nil

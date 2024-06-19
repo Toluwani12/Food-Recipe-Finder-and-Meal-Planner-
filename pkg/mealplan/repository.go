@@ -148,13 +148,13 @@ func (r *Repository) GetMealPlanPlaceholders(userID string, weekStartDate time.T
 	return placeholders, nil
 }
 
-func (r *Repository) RecommendRecipes(ctx context.Context, userID uuid.UUID, limit int) ([]recipe.Recipe, error) {
+func (r *Repository) RecommendRecipes(ctx context.Context, userID uuid.UUID, limit int, mealType string) ([]recipe.Recipe, error) {
 	var recipes []recipe.Recipe
 
 	query := `
     WITH recommended AS (
         SELECT recipe_id, similarity
-        FROM recommend_recipes($1, $2)
+        FROM recommend_recipes($1, $2, $3)
     )
     SELECT
         r.id,
@@ -167,12 +167,15 @@ func (r *Repository) RecommendRecipes(ctx context.Context, userID uuid.UUID, lim
     FROM
         recommended rec
     JOIN recipes r ON rec.recipe_id = r.id
+    JOIN recipe_details rd ON r.id = rd.recipe_id
+    WHERE
+        rd.meal_type = $3
     ORDER BY
         rec.similarity DESC
     LIMIT $2;
     `
 
-	err := r.db.SelectContext(ctx, &recipes, query, userID, limit)
+	err := r.db.SelectContext(ctx, &recipes, query, userID, limit, mealType)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, liberror.New("No recommended recipes found", http.StatusNotFound)
