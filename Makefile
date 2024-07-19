@@ -4,7 +4,8 @@ MIGRATE_MAC=migrate.darwin-amd64
 MIGRATE_WINDOWS=migrate.windows-amd64.exe
 MIGRATE_BIN=/usr/local/bin/migrate
 
-DB_URL=postgres://recipe_q9i7_user:HcRB9IqNE49we2aN93XGp7z5RPdZY0rq@dpg-cpcf6t3tg9os738ccrjg-a.frankfurt-postgres.render.com:5432/recipe_q9i7?sslmode=require
+DB_URL=postgres://recipe_gc2u_user:qCLSFmKiOGfROBK3OzfjwYmsqGMRF5yQ@dpg-cqd760bv2p9s73e95o6g-a.frankfurt-postgres.render.com:5432/recipe_gc2u?sslmode=require
+#DB_URL=postgres://recipe_q9i7_user:HcRB9IqNE49we2aN93XGp7z5RPdZY0rq@dpg-cpcf6t3tg9os738ccrjg-a.frankfurt-postgres.render.com:5432/recipe_q9i7?sslmode=require
 #DB_URL=postgresql://localhost:5432/recipe?sslmode=disable
 MIGRATE_CMD=migrate -path db/migrations -database "$(DB_URL)"
 
